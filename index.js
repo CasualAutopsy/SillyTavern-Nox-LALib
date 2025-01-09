@@ -4634,6 +4634,13 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'ife',
         let command;
         /**@type {string} */
         let expression;
+        const scope = args._scope;
+        const ifeScope = uuidv4();
+        if (scope.existsVariableInScope('_LALIB_ife_scope')) {
+            scope.setVariable('_LALIB_ife_scope', ifeScope);
+        } else {
+            scope.letVariable('_LALIB_ife_scope', ifeScope);
+        }
         if (value) {
             if (value.length > 1 && value.at(-1) instanceof SlashCommandClosure) {
                 then = /**@type {SlashCommandClosure}*/(value.pop());
@@ -4668,6 +4675,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'ife',
         const data = {
             if: result,
             isHandled: false,
+            scope: ifeScope,
         };
         if (result && then) {
             data.isHandled = true;
@@ -4771,6 +4779,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'elseif',
             console.warn('[LALIB]', '[ELSEIF]', 'failed to parse pipe', args._scope.pipe, ex);
         }
         if (data?.if !== undefined) {
+            if (data.scope != args._scope.getVariable('_LALIB_ife_scope')) return '';
             if (!data.if) {
                 let result;
                 if (closure) {
@@ -4878,6 +4887,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'else',
             console.warn('[LALIB]', '[ELSE]', 'failed to parse pipe', args.value, ex);
         }
         if (data?.if !== undefined && !data?.isHandled) {
+            if (data.scope != args._scope.getVariable('_LALIB_ife_scope')) return '';
             if (!data.if) {
                 data.isHandled = true;
                 let result;
