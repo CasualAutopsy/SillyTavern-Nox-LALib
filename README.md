@@ -1378,7 +1378,7 @@ Copies value into clipboard.
 
 
 #### <a id="lalib-help-cmd-download"></a>`/download`
-- `[name:string]? = SillyTavern-2024-11-06T15:46:46.129Z`  
+- `[name:string]? = SillyTavern-2025-01-09T00:28:08.583Z`  
  *(optional)* the filename for the downloaded file
 - `[ext:string]? = txt`  
  *(optional)* the file extension for the downloaded file
@@ -2034,6 +2034,8 @@ Trigger a new swipe on the last message.
  *(optional)* the message ID to edit
 - `[append=true|false]? = false`  
  *(optional)* whether to append the new text to the end of the message
+- `[await=true|false]? = false`  
+ *(optional)* whether to wait until the chat is saved before continuing
 - `(string)`  
  the new text for the message
 
@@ -2054,6 +2056,14 @@ Edit the current message or the message at the provided message ID. Use <code>ap
 /delay 1000 |
 /message-edit append= bar |
 // adds a new message "foo" then changes it to "foobar" |
+```
+```stscript
+
+/sendas name=Alice foo |
+/delay 1000 |
+/message-edit await= bar |
+/echo chat has been saved |
+// adds a new message "foo" then changes it to "bar" and waits for the chat to save |
 ```
 
 
@@ -2320,7 +2330,7 @@ Plays an audio file.
 ##### **Examples**
 ```stscript
 
-/sfx volume=1.5 await=true /user/audio/mySound.wav | /echo finished playing sound |
+/sfx volume=1.5 await=true /user/files/audio/mySound.wav | /echo finished playing sound |
 ```
 
 
