@@ -4804,6 +4804,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'elseif',
                 const data = {
                     if: result,
                     isHandled: false,
+                    scope: args._scope.getVariable('_LALIB_ife_scope'),
                 };
                 if (result && then) {
                     data.isHandled = true;
