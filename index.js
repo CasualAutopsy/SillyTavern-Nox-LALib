@@ -5873,7 +5873,8 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'message-edit
      *
      * @param {import('../../../slash-commands/SlashCommand.js').NamedArguments&{
      *  message:string,
-     *  append:string
+     *  append:string,
+     *  await:string,
      * }} args
      * @param {string} value
      */
@@ -5898,6 +5899,11 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'message-edit
         );
         await eventSource.emit(event_types.MESSAGE_EDITED, mesId);
         await eventSource.emit(event_types.MESSAGE_UPDATED, mesId);
+        if (isTrueFlag(args.await)) {
+            await saveChatConditional();
+        } else {
+            saveChatDebounced();
+        }
         return '';
     },
     namedArgumentList: [
@@ -5909,6 +5915,13 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'message-edit
         SlashCommandNamedArgument.fromProps({
             name: 'append',
             description: 'whether to append the new text to the end of the message',
+            typeList: [ARGUMENT_TYPE.BOOLEAN],
+            defaultValue: 'false',
+            enumList: ['true', 'false'],
+        }),
+        SlashCommandNamedArgument.fromProps({
+            name: 'await',
+            description: 'whether to wait until the chat is saved before continuing',
             typeList: [ARGUMENT_TYPE.BOOLEAN],
             defaultValue: 'false',
             enumList: ['true', 'false'],
@@ -5941,6 +5954,15 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'message-edit
                     /message-edit append= bar |
                 `,
                 'adds a new message "foo" then changes it to "foobar"',
+            ],
+            [
+                `
+                    /sendas name=Alice foo |
+                    /delay 1000 |
+                    /message-edit await= bar |
+                    /echo chat has been saved
+                `,
+                'adds a new message "foo" then changes it to "bar" and waits for the chat to save',
             ],
         ],
     ),
