@@ -5883,7 +5883,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'message-edit
         let mesId = parseInt(args.message ?? '-1');
         if (mesId < 0) mesId += chat.length;
         const mes = chat.at(mesId);
-        if (isTrueBoolean(args.append)) {
+        if (isTrueFlag(args.append)) {
             value = `${mes.mes}${value}`;
         }
         mes.mes = value;
