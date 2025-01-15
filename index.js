@@ -4128,7 +4128,9 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'dom',
             if (args.target !== undefined && idx != Number(args.target)) return '';
             switch (args.action) {
                 case 'click': {
-                    target.click();
+                    target.dispatchEvent(new Event('pointerdown', { bubbles:true }));
+                    target.dispatchEvent(new Event('click', { bubbles:true }));
+                    target.dispatchEvent(new Event('pointerup', { bubbles:true }));
                     return '';
                 }
                 case 'value': {
