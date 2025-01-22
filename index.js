@@ -1260,7 +1260,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'whilee',
             } else {
                 const text = value.slice(0, -1).join(' ');
                 const parser = new BoolParser(args._scope, args);
-                expression = /**@type {()=>boolean]*/(parser.parse(text));
+                expression = /**@type {()=>boolean}*/(parser.parse(text));
             }
             runClosure = value.at(-1);
         }
