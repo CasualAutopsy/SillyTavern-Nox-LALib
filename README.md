@@ -7,7 +7,7 @@ Library of STScript commands.
 
 - [Help](#lalib-help-group-Help) ([lalib?](#lalib-help-cmd-lalib_))
 - [Boolean Operations](#lalib-help-group-Boolean_Operations) ([=](#lalib-help-cmd-_), [test](#lalib-help-cmd-test), [and](#lalib-help-cmd-and), [or](#lalib-help-cmd-or), [not](#lalib-help-cmd-not))
-- [List Operations and Loops](#lalib-help-group-List_Operations_and_Loops) ([pop](#lalib-help-cmd-pop), [push](#lalib-help-cmd-push), [shift](#lalib-help-cmd-shift), [unshift](#lalib-help-cmd-unshift), [foreach](#lalib-help-cmd-foreach), [map](#lalib-help-cmd-map), [whilee](#lalib-help-cmd-whilee), [reduce](#lalib-help-cmd-reduce), [sorte](#lalib-help-cmd-sorte), [flatten](#lalib-help-cmd-flatten), [filter](#lalib-help-cmd-filter), [find](#lalib-help-cmd-find), [slice](#lalib-help-cmd-slice), [splice](#lalib-help-cmd-splice), [shuffle](#lalib-help-cmd-shuffle), [pick](#lalib-help-cmd-pick), [reverse](#lalib-help-cmd-reverse), [dict](#lalib-help-cmd-dict), [keys](#lalib-help-cmd-keys))
+- [List Operations and Loops](#lalib-help-group-List_Operations_and_Loops) ([pop](#lalib-help-cmd-pop), [push](#lalib-help-cmd-push), [shift](#lalib-help-cmd-shift), [unshift](#lalib-help-cmd-unshift), [foreach](#lalib-help-cmd-foreach), [map](#lalib-help-cmd-map), [whilee](#lalib-help-cmd-whilee), [reduce](#lalib-help-cmd-reduce), [groupby](#lalib-help-cmd-groupby), [sorte](#lalib-help-cmd-sorte), [flatten](#lalib-help-cmd-flatten), [filter](#lalib-help-cmd-filter), [find](#lalib-help-cmd-find), [slice](#lalib-help-cmd-slice), [splice](#lalib-help-cmd-splice), [shuffle](#lalib-help-cmd-shuffle), [pick](#lalib-help-cmd-pick), [reverse](#lalib-help-cmd-reverse), [dict](#lalib-help-cmd-dict), [keys](#lalib-help-cmd-keys))
 - [Split & Join](#lalib-help-group-Split_Join) ([split](#lalib-help-cmd-split), [join](#lalib-help-cmd-join))
 - [Text Operations](#lalib-help-group-Text_Operations) ([trim](#lalib-help-cmd-trim), [pad-start](#lalib-help-cmd-pad_start), [pad-end](#lalib-help-cmd-pad_end), [pad-both](#lalib-help-cmd-pad_both), [diff](#lalib-help-cmd-diff), [json-pretty](#lalib-help-cmd-json_pretty), [substitute](#lalib-help-cmd-substitute), [wordcount](#lalib-help-cmd-wordcount), [sentencecount](#lalib-help-cmd-sentencecount), [segment](#lalib-help-cmd-segment))
 - [Regular Expressions](#lalib-help-group-Regular_Expressions) ([re-escape](#lalib-help-cmd-re_escape), [re-test](#lalib-help-cmd-re_test), [re-replace](#lalib-help-cmd-re_replace), [re-exec](#lalib-help-cmd-re_exec))
@@ -468,6 +468,57 @@ The reducer closure accepts up to three arguments:
     /return {{var::acc}} |
 :} |
 // returns {"a":"1","b":"2","c":"3"} |
+```
+
+
+#### <a id="lalib-help-cmd-groupby"></a>`/groupby`
+- `(list)`  
+ the list to group
+- `...(string|closure)`  
+ the expression or closure to evaluate
+
+
+Groups the elements of a given list according to the string values returned by a provided expression or closure.
+
+##### **Examples**
+```stscript
+
+/return [
+    {"x":"a", "y":1},
+    {"x":"b", "y":2},
+    {"x":"c", "y":3},
+    {"x":"a", "y":4},
+    {"x":"a", "y":5},
+    {"x":"b", "y":6}
+] |
+/groupby {{pipe}} item.x |
+// returns {"a": [{...}, {...}, {...}], "b": [{...}, {...}], "c": [{...}]}
+                 |
+```
+```stscript
+
+/return [
+    {"x":"a", "y":1},
+    {"x":"b", "y":2},
+    {"x":"c", "y":3},
+    {"x":"a", "y":4},
+    {"x":"a", "y":5},
+    {"x":"b", "y":6}
+] |
+/groupby {{pipe}} {: /getat index=x {{var::item}} :} |
+// returns {"a": [{...}, {...}, {...}], "b": [{...}, {...}], "c": [{...}]}
+                 |
+```
+```stscript
+
+/return [
+    "foo",
+    "foo",
+    "bar"
+] |
+/groupby {{pipe}} item |
+// returns {"foo":["foo","foo"], "bar":["bar"]}
+                 |
 ```
 
 
@@ -1378,7 +1429,7 @@ Copies value into clipboard.
 
 
 #### <a id="lalib-help-cmd-download"></a>`/download`
-- `[name:string]? = SillyTavern-2025-01-09T00:28:08.583Z`  
+- `[name:string]? = SillyTavern-2025-01-22T22:18:07.912Z`  
  *(optional)* the filename for the downloaded file
 - `[ext:string]? = txt`  
  *(optional)* the file extension for the downloaded file

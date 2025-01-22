@@ -1451,6 +1451,159 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'reduce',
     returns: 'reduced value',
 }));
 
+SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'groupby',
+    /**
+     *
+     * @param {import('../../../slash-commands/SlashCommand.js').NamedArguments & {
+     * }} args
+     * @param {*} value
+     */
+    callback: async(args, value)=>{
+        /**@type {Array} */
+        let list;
+        /**@type {SlashCommandClosure} */
+        let closure;
+        /**@type {()=>string} */
+        let expression;
+        /**@type {BoolParser} */
+        let parser;
+        if (value) {
+            list = getListVar(null, null, value[0]);
+            if (value[1] instanceof SlashCommandClosure) {
+                closure = /**@type {SlashCommandClosure}*/(value[1]);
+            } else {
+                const text = value.slice(1).join(' ');
+                parser = new BoolParser(args._scope, args);
+                parser.scope.letVariable('item');
+                parser.scope.letVariable('index');
+                expression = /**@type {()=>string}*/(parser.parse(text));
+            }
+        }
+        const keySelector = async()=>{
+            if (closure) return (await closure.execute()).pipe;
+            return expression();
+        };
+        const keyList = [];
+        if (!Array.isArray(list)) {
+            throw new Error('/groupby requires a list or dictionary to operate on.');
+        } else {
+            if (closure) {
+                if (closure.argumentList.length == 0) {
+                    const arg = new SlashCommandNamedArgumentAssignment();
+                    arg.name = 'item';
+                    closure.argumentList.push(arg);
+                }
+                if (closure.argumentList.length == 1) {
+                    const arg = new SlashCommandNamedArgumentAssignment();
+                    arg.name = 'index';
+                    closure.argumentList.push(arg);
+                }
+                if (closure.argumentList.length > 0) {
+                    const ass = new SlashCommandNamedArgumentAssignment();
+                    ass.name = closure.argumentList[0].name;
+                    closure.providedArgumentList[0] = ass;
+                }
+                if (closure.argumentList.length > 1) {
+                    const ass = new SlashCommandNamedArgumentAssignment();
+                    ass.name = closure.argumentList[1].name;
+                    closure.providedArgumentList[1] = ass;
+                }
+            }
+            for (let [index, item] of Object.entries(list)) {
+                // if (typeof item == 'object') {
+                //     item = JSON.stringify(item);
+                // }
+                if (closure) {
+                    if (closure.argumentList.length > 0) {
+                        closure.providedArgumentList[0].value = typeof item == 'string' ? item : JSON.stringify(item);
+                    }
+                    if (closure.argumentList.length > 1) {
+                        closure.providedArgumentList[1].value = index.toString();
+                    }
+                    closure.breakController = new SlashCommandBreakController();
+                } else {
+                    parser.scope.setVariable('item', typeof item == 'string' ? item : JSON.stringify(item));
+                    parser.scope.setVariable('index', index.toString());
+                }
+                keyList.push({ key:await keySelector(), value:item });
+            }
+            const result = Object.groupBy(keyList, (it)=>it.key);
+            for (const [k,v] of Object.entries(result)) {
+                result[k] = v.map(it=>it.value);
+            }
+            return JSON.stringify(result);
+        }
+    },
+    unnamedArgumentList: [
+        SlashCommandArgument.fromProps({
+            description: 'the list to group',
+            typeList: [ARGUMENT_TYPE.LIST],
+            isRequired: true,
+        }),
+        SlashCommandArgument.fromProps({
+            description: 'the expression or closure to evaluate',
+            typeList: [ARGUMENT_TYPE.STRING, ARGUMENT_TYPE.CLOSURE],
+            isRequired: true,
+            acceptsMultiple: true,
+            enumProvider: makeBoolEnumProvider(),
+        }),
+    ],
+    splitUnnamedArgument: true,
+    returns: 'dictionary with the grouped items',
+    helpString: help(
+        `
+            Groups the elements of a given list according to the string values returned by a provided expression or closure.
+        `,
+        [
+            [
+                `
+                    /return [
+                        {"x":"a", "y":1},
+                        {"x":"b", "y":2},
+                        {"x":"c", "y":3},
+                        {"x":"a", "y":4},
+                        {"x":"a", "y":5},
+                        {"x":"b", "y":6}
+                    ] |
+                    /groupby {{pipe}} item.x |
+                `,
+                `
+                    returns {"a": [{...}, {...}, {...}], "b": [{...}, {...}], "c": [{...}]}
+                `,
+            ],
+            [
+                `
+                    /return [
+                        {"x":"a", "y":1},
+                        {"x":"b", "y":2},
+                        {"x":"c", "y":3},
+                        {"x":"a", "y":4},
+                        {"x":"a", "y":5},
+                        {"x":"b", "y":6}
+                    ] |
+                    /groupby {{pipe}} {: /getat index=x {{var::item}} :} |
+                `,
+                `
+                    returns {"a": [{...}, {...}, {...}], "b": [{...}, {...}], "c": [{...}]}
+                `,
+            ],
+            [
+                `
+                    /return [
+                        "foo",
+                        "foo",
+                        "bar"
+                    ] |
+                    /groupby {{pipe}} item |
+                `,
+                `
+                    returns {"foo":["foo","foo"], "bar":["bar"]}
+                `,
+            ],
+        ],
+    ),
+}));
+
 
 SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'sorte',
     /**
