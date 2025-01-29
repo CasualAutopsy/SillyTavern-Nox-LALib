@@ -2152,7 +2152,11 @@ Get a list of all chats of the current or provided character.
 ##### **Examples**
 ```stscript
 
-/chat-list |/chat-list char=default_Seraphina.png |
+/chat-list |
+```
+```stscript
+
+/chat-list char=default_Seraphina.png |
 ```
 
 

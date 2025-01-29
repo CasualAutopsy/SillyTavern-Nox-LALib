@@ -1,4 +1,4 @@
-import { characters, chat, chat_metadata, eventSource, event_types, extractMessageBias, getRequestHeaders, messageFormatting, reloadMarkdownProcessor, saveChatConditional, saveChatDebounced, saveSettingsDebounced, sendSystemMessage, showSwipeButtons, this_chid } from '../../../../script.js';
+import { characters, chat, chat_metadata, eventSource, event_types, extractMessageBias, getPastCharacterChats, getRequestHeaders, messageFormatting, reloadMarkdownProcessor, saveChatConditional, saveChatDebounced, saveSettingsDebounced, sendSystemMessage, showSwipeButtons, this_chid } from '../../../../script.js';
 import { getMessageTimeStamp } from '../../../RossAscends-mods.js';
 import { extension_settings, getContext, saveMetadataDebounced } from '../../../extensions.js';
 import { findGroupMemberId, getGroupPastChats, groups, selected_group } from '../../../group-chats.js';
@@ -10,7 +10,7 @@ import { ARGUMENT_TYPE, SlashCommandArgument, SlashCommandNamedArgument } from '
 import { SlashCommandBreakController } from '../../../slash-commands/SlashCommandBreakController.js';
 import { SlashCommandClosure } from '../../../slash-commands/SlashCommandClosure.js';
 import { SlashCommandClosureResult } from '../../../slash-commands/SlashCommandClosureResult.js';
-import { enumIcons } from '../../../slash-commands/SlashCommandCommonEnumsProvider.js';
+import { commonEnumProviders, enumIcons } from '../../../slash-commands/SlashCommandCommonEnumsProvider.js';
 import { enumTypes, SlashCommandEnumValue } from '../../../slash-commands/SlashCommandEnumValue.js';
 import { SlashCommandNamedArgumentAssignment } from '../../../slash-commands/SlashCommandNamedArgumentAssignment.js';
 import { SlashCommandParser } from '../../../slash-commands/SlashCommandParser.js';
@@ -6210,24 +6210,40 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'chat-list',
      * @param {*} value
      */
     callback: async(args, value)=>{
-        if (args.char === undefined && selected_group) {
-            return JSON.stringify((await getGroupPastChats(selected_group)).map(it=>it.file_name));
+        let character;
+        if (args.char != undefined) {
+            const charName = args.char.toLowerCase();
+            character =
+                characters.find(it=>
+                    it.avatar.split('.').slice(0, -1).join('.').toLowerCase() == charName
+                    || it.name.toLowerCase() == charName
+                    ,
+                )
+                ?? groups.find(it=>it.name.toLowerCase() == charName);
+        } else if (this_chid != undefined) {
+            character = characters[this_chid];
+        } else if (selected_group != undefined) {
+            character = groups.find(it=>it.id == selected_group);
         }
-        const result = await fetch('/api/characters/chats', {
-            method: 'POST',
-            headers: getRequestHeaders(),
-            body: JSON.stringify({ avatar_url: args.char ?? characters[this_chid]?.avatar, simple: true }),
-        });
-        if (!result.ok) {
-            return '[]';
+        if (!character) {
+            toastr.warning(`No character or group found for: ${args.char ?? this_chid ?? selected_group}`, '/chat-list');
+            return '';
         }
-        const data = await result.json();
-        return JSON.stringify(data.map(x => String(x.file_name).replace('.jsonl', '')));
+        let result;
+        if (character.id) {
+            // group
+            result = await getGroupPastChats(character.id);
+        } else {
+            // char
+            result = await getPastCharacterChats(characters.indexOf(character));
+        }
+        return JSON.stringify(result.map(it => String(it.file_name).replace(/\.jsonl$/, '')));
     },
     namedArgumentList: [
         SlashCommandNamedArgument.fromProps({ name: 'char',
             description: 'avatar name of the char',
             defaultValue: 'current char',
+            enumProvider: commonEnumProviders.characters('all'),
         }),
     ],
     returns: 'list of all chats of current or selected character',
@@ -6238,7 +6254,13 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'chat-list',
         [
             [
                 `
-                    /chat-list |/chat-list char=default_Seraphina.png |
+                    /chat-list |
+                `,
+                '',
+            ],
+            [
+                `
+                    /chat-list char=default_Seraphina.png |
                 `,
                 '',
             ],
