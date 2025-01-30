@@ -65,7 +65,7 @@ export class BoolParser {
      */
     constructor(scope, args) {
         this.scope = new SlashCommandScope(scope);
-        for (const [k, v] of Object.entries(args)) {
+        for (const [k, v] of Object.entries(Object.assign({ pipe:scope.pipe }, args))) {
             if (k[0] == '_') continue;
             if (this.scope.existsVariableInScope(k)) this.scope.setVariable(k, v);
             else this.scope.letVariable(k, v);
