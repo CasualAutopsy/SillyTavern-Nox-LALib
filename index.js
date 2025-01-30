@@ -69,17 +69,18 @@ function getRange(text, value) {
         throw new Error(`Invalid range: "${text}"`);
     }
     let [_, start, isRange, end] = re.exec(text);
-    start = Number(start);
+    const startIdx = parseInt(start);
+    const endIdx = parseInt(end);
     if (!isRange) {
-        if (start == -1) {
-            return value.slice(start);
+        if (startIdx == -1) {
+            return value.slice(startIdx);
         }
-        return value.slice(start, start + 1);
+        return value.slice(startIdx, startIdx + 1);
     }
-    if (end === undefined) {
-        return value.slice(start);
+    if (end === undefined || endIdx == -1) {
+        return value.slice(startIdx);
     }
-    return value.slice(start, Number(end) + 1);
+    return value.slice(startIdx, Number(end) + 1);
 }
 
 function isTrueFlag(value) {
