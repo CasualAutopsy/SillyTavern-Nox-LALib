@@ -23,7 +23,7 @@ Library of STScript commands.
 - [World Info](#lalib-help-group-World_Info) ([wi-list-books](#lalib-help-cmd-wi_list_books), [wi-list-entries](#lalib-help-cmd-wi_list_entries), [wi-activate](#lalib-help-cmd-wi_activate))
 - [Costumes / Sprites](#lalib-help-group-Costumes_Sprites) ([costumes](#lalib-help-cmd-costumes))
 - [Quick Replies](#lalib-help-group-Quick_Replies) ([qr-edit](#lalib-help-cmd-qr_edit), [qr-add](#lalib-help-cmd-qr_add))
-- [Chat Messages](#lalib-help-group-Chat_Messages) ([swipes-get](#lalib-help-cmd-swipes_get), [swipes-get](#lalib-help-cmd-swipes_get), [swipes-list](#lalib-help-cmd-swipes_list), [swipes-count](#lalib-help-cmd-swipes_count), [swipes-index](#lalib-help-cmd-swipes_index), [swipes-add](#lalib-help-cmd-swipes_add), [swipes-del](#lalib-help-cmd-swipes_del), [swipes-go](#lalib-help-cmd-swipes_go), [swipes-swipe](#lalib-help-cmd-swipes_swipe), [message-edit](#lalib-help-cmd-message_edit), [message-move](#lalib-help-cmd-message_move))
+- [Chat Messages](#lalib-help-group-Chat_Messages) ([swipes-get](#lalib-help-cmd-swipes_get), [swipes-get](#lalib-help-cmd-swipes_get), [swipes-list](#lalib-help-cmd-swipes_list), [swipes-count](#lalib-help-cmd-swipes_count), [swipes-index](#lalib-help-cmd-swipes_index), [swipes-add](#lalib-help-cmd-swipes_add), [swipes-del](#lalib-help-cmd-swipes_del), [swipes-go](#lalib-help-cmd-swipes_go), [swipes-swipe](#lalib-help-cmd-swipes_swipe), [message-edit](#lalib-help-cmd-message_edit), [message-move](#lalib-help-cmd-message_move), [message-get](#lalib-help-cmd-message_get), [message-list](#lalib-help-cmd-message_list))
 - [Chat Management](#lalib-help-group-Chat_Management) ([chat-list](#lalib-help-cmd-chat_list), [chat-parent](#lalib-help-cmd-chat_parent), [message-on](#lalib-help-cmd-message_on), [message-off](#lalib-help-cmd-message_off), [message-listeners](#lalib-help-cmd-message_listeners), [role-swap](#lalib-help-cmd-role_swap))
 - [Time & Date](#lalib-help-group-Time_Date) ([timestamp](#lalib-help-cmd-timestamp))
 - [Async](#lalib-help-group-Async) ([fireandforget](#lalib-help-cmd-fireandforget))
@@ -2135,6 +2135,68 @@ Move a message up or down in the chat.
 ```stscript
 
 /message-move from={{lastMessageId}} to=10 |/message-move from={{lastMessageId}} up=2 |/message-move from=3 down=10 |
+```
+
+
+#### <a id="lalib-help-cmd-message_get"></a>`/message-get`
+- `(number)?`  
+ *(optional)* the message ID to get, negative numbers to start at last message
+
+
+Get a dictionary with details of a single chat message.
+
+##### **Examples**
+```stscript
+
+/message-get 0 |
+/= pipe.name |
+// returns the character / user name of the first chat message |
+```
+```stscript
+
+/message-get -1 |
+/= pipe.mes |
+// returns the message content of the last chat message |
+```
+```stscript
+
+/message-get -2 |
+/= pipe.send_date |
+// returns the timestamp of the second to last chat message |
+```
+
+
+#### <a id="lalib-help-cmd-message_list"></a>`/message-list`
+- `(string)?`  
+ *(optional)* range of message IDs to get, negative numbers to start at last message
+
+
+Get a list of dictionaries with details of chat messages.
+
+##### **Examples**
+```stscript
+
+/message-list |
+/= pipe*.name |
+// returns the char / user names of all messages |
+```
+```stscript
+
+/message-list 0-2 |
+/= pipe*.name |
+// returns the char / user names of the first three messages |
+```
+```stscript
+
+/message-list -3--1 |
+/= pipe.send_date |
+// returns timestamps of the last three messages |
+```
+```stscript
+
+/message-list 0--5 |
+/= pipe.mes |
+// returns the message contents of all messages except the last four (range is inclusive) |
 ```
 
 

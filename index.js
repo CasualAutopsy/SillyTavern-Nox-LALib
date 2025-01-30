@@ -6199,6 +6199,106 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'message-move
     ),
 }));
 
+SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'message-get',
+    /**
+     * @param {import('../../../slash-commands/SlashCommand.js').NamedArguments&{
+    * }} args
+    * @param {string} value
+    */
+    callback: (args, value)=>{
+        let idx = parseInt(value);
+        if (idx < 0) idx += chat.length;
+        return JSON.stringify(chat[idx]);
+    },
+    unnamedArgumentList: [
+        SlashCommandArgument.fromProps({ description: 'the message ID to get, negative numbers to start at last message',
+            typeList: [ARGUMENT_TYPE.NUMBER],
+        }),
+    ],
+    returns: 'dictionary of a single chat message',
+    helpString: help(
+        `
+            Get a dictionary with details of a single chat message.
+        `,
+        [
+            [
+                `
+                    /message-get 0 |
+                    /= pipe.name |
+                `,
+                'returns the character / user name of the first chat message',
+            ],
+            [
+                `
+                    /message-get -1 |
+                    /= pipe.mes |
+                `,
+                'returns the message content of the last chat message',
+            ],
+            [
+                `
+                    /message-get -2 |
+                    /= pipe.send_date |
+                `,
+                'returns the timestamp of the second to last chat message',
+            ],
+        ],
+    ),
+}));
+
+SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'message-list',
+    /**
+     * @param {import('../../../slash-commands/SlashCommand.js').NamedArguments&{
+    * }} args
+    * @param {string} value
+    */
+    callback: (args, value)=>{
+        if (value.length == 0) value = '0--1';
+        return JSON.stringify(getRange(value, chat));
+    },
+    unnamedArgumentList: [
+        SlashCommandArgument.fromProps({ description: 'range of message IDs to get, negative numbers to start at last message',
+            typeList: [ARGUMENT_TYPE.STRING],
+        }),
+    ],
+    returns: 'list of message dictionaries',
+    helpString: help(
+        `
+            Get a list of dictionaries with details of chat messages.
+        `,
+        [
+            [
+                `
+                    /message-list |
+                    /= pipe*.name |
+                `,
+                'returns the char / user names of all messages',
+            ],
+            [
+                `
+                    /message-list 0-2 |
+                    /= pipe*.name |
+                `,
+                'returns the char / user names of the first three messages',
+            ],
+            [
+                `
+                    /message-list -3--1 |
+                    /= pipe.send_date |
+                `,
+                'returns timestamps of the last three messages',
+            ],
+            [
+                `
+                    /message-list 0--5 |
+                    /= pipe.mes |
+                `,
+                'returns the message contents of all messages except the last four (range is inclusive)',
+            ],
+        ],
+    ),
+}));
+
 
 
 // GROUP: Chat Management
