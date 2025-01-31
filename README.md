@@ -2189,13 +2189,13 @@ Get a list of dictionaries with details of chat messages.
 ```stscript
 
 /message-list -3--1 |
-/= pipe.send_date |
+/= pipe*.send_date |
 // returns timestamps of the last three messages |
 ```
 ```stscript
 
 /message-list 0--5 |
-/= pipe.mes |
+/= pipe*.mes |
 // returns the message contents of all messages except the last four (range is inclusive) |
 ```
 
