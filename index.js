@@ -1957,12 +1957,9 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'filter',
                 }
             }
             for (let [index, item] of list) {
-                if (typeof item == 'object') {
-                    item = JSON.stringify(item);
-                }
                 let outcome;
                 if (closure) {
-                    closure.scope.setMacro('item', item, true);
+                    closure.scope.setMacro('item', typeof item == 'string' ? item : JSON.stringify(item), true);
                     closure.scope.setMacro('index', index, true);
                     if (closure.argumentList.length > 0) {
                         closure.providedArgumentList[0].value = typeof item == 'string' ? item : JSON.stringify(item);
@@ -1976,14 +1973,14 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'filter',
                     if (commandResult.isBreak) break;
                 } else if (expression !== undefined) {
                     const parser = new BoolParser(args._scope, args);
-                    parser.scope.letVariable('item', item);
+                    parser.scope.letVariable('item', typeof item == 'string' ? item : JSON.stringify(item));
                     parser.scope.letVariable('index', index);
                     const exp = parser.parse(expression);
                     commandResult = new SlashCommandClosureResult();
                     commandResult.pipe = exp().toString();
                 } else {
                     commandResult = (await executeSlashCommandsWithOptions(
-                        command.toString().replace(/{{item}}/ig, item).replace(/{{index}}/ig, index),
+                        command.toString().replace(/{{item}}/ig, typeof item == 'string' ? item : JSON.stringify(item)).replace(/{{index}}/ig, index),
                         {
                             handleExecutionErrors: false,
                             handleParserErrors: false,
