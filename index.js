@@ -3251,6 +3251,48 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'substitute',
     ),
 }));
 
+SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'encodeURIComponent',
+    callback: (args, value)=>encodeURIComponent(value.toString()),
+    unnamedArgumentList: [
+        SlashCommandArgument.fromProps({ description: 'text to encode',
+            isRequired: true,
+        }),
+    ],
+    helpString: help(
+        'Encodes characters such as &, ?, =, space... for use in an URI\'s query parameters',
+        [
+            [
+                `
+                    /encodeURIComponent quick brown/fox |
+                `,
+                'returns <code>quick%20brown%2Ffox</code>',
+            ],
+        ],
+    ),
+    returns: 'encoded text',
+}));
+
+SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'decodeURIComponent',
+    callback: (args, value)=>decodeURIComponent(value.toString()),
+    unnamedArgumentList: [
+        SlashCommandArgument.fromProps({ description: 'text to decode',
+            isRequired: true,
+        }),
+    ],
+    helpString: help(
+        'Reversal of /encodeURIComponent',
+        [
+            [
+                `
+                    /decodeURIComponent quick%20brown%2Ffox
+                `,
+                'returns <code>quick brown/fox',
+            ],
+        ],
+    ),
+    returns: 'decoded text',
+}));
+
 
 SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'wordcount',
     callback: (args, value) => {

@@ -9,7 +9,7 @@ Library of STScript commands.
 - [Boolean Operations](#lalib-help-group-Boolean_Operations) ([=](#lalib-help-cmd-_), [test](#lalib-help-cmd-test), [and](#lalib-help-cmd-and), [or](#lalib-help-cmd-or), [not](#lalib-help-cmd-not))
 - [List Operations and Loops](#lalib-help-group-List_Operations_and_Loops) ([pop](#lalib-help-cmd-pop), [push](#lalib-help-cmd-push), [shift](#lalib-help-cmd-shift), [unshift](#lalib-help-cmd-unshift), [foreach](#lalib-help-cmd-foreach), [map](#lalib-help-cmd-map), [whilee](#lalib-help-cmd-whilee), [reduce](#lalib-help-cmd-reduce), [groupby](#lalib-help-cmd-groupby), [sorte](#lalib-help-cmd-sorte), [flatten](#lalib-help-cmd-flatten), [filter](#lalib-help-cmd-filter), [find](#lalib-help-cmd-find), [slice](#lalib-help-cmd-slice), [splice](#lalib-help-cmd-splice), [shuffle](#lalib-help-cmd-shuffle), [pick](#lalib-help-cmd-pick), [reverse](#lalib-help-cmd-reverse), [dict](#lalib-help-cmd-dict), [keys](#lalib-help-cmd-keys))
 - [Split & Join](#lalib-help-group-Split_Join) ([split](#lalib-help-cmd-split), [join](#lalib-help-cmd-join))
-- [Text Operations](#lalib-help-group-Text_Operations) ([trim](#lalib-help-cmd-trim), [pad-start](#lalib-help-cmd-pad_start), [pad-end](#lalib-help-cmd-pad_end), [pad-both](#lalib-help-cmd-pad_both), [diff](#lalib-help-cmd-diff), [json-pretty](#lalib-help-cmd-json_pretty), [substitute](#lalib-help-cmd-substitute), [wordcount](#lalib-help-cmd-wordcount), [sentencecount](#lalib-help-cmd-sentencecount), [segment](#lalib-help-cmd-segment))
+- [Text Operations](#lalib-help-group-Text_Operations) ([trim](#lalib-help-cmd-trim), [pad-start](#lalib-help-cmd-pad_start), [pad-end](#lalib-help-cmd-pad_end), [pad-both](#lalib-help-cmd-pad_both), [diff](#lalib-help-cmd-diff), [json-pretty](#lalib-help-cmd-json_pretty), [substitute](#lalib-help-cmd-substitute), [encodeURIComponent](#lalib-help-cmd-encodeURIComponent), [decodeURIComponent](#lalib-help-cmd-decodeURIComponent), [wordcount](#lalib-help-cmd-wordcount), [sentencecount](#lalib-help-cmd-sentencecount), [segment](#lalib-help-cmd-segment))
 - [Regular Expressions](#lalib-help-group-Regular_Expressions) ([re-escape](#lalib-help-cmd-re_escape), [re-test](#lalib-help-cmd-re_test), [re-replace](#lalib-help-cmd-re_replace), [re-exec](#lalib-help-cmd-re_exec))
 - [Accessing & Manipulating Structured Data](#lalib-help-group-Accessing_Manipulating_Structured_Data) ([getat](#lalib-help-cmd-getat), [setat](#lalib-help-cmd-setat))
 - [Exception Handling](#lalib-help-group-Exception_Handling) ([try](#lalib-help-cmd-try), [catch](#lalib-help-cmd-catch))
@@ -1047,6 +1047,34 @@ Substitute macros in text.
 ```
 
 
+#### <a id="lalib-help-cmd-encodeURIComponent"></a>`/encodeURIComponent`
+- `(string)`  
+ text to encode
+
+Encodes characters such as &, ?, =, space... for use in an URI's query parameters
+
+##### **Examples**
+```stscript
+
+/encodeURIComponent quick brown/fox |
+// returns quick%20brown%2Ffox |
+```
+
+
+#### <a id="lalib-help-cmd-decodeURIComponent"></a>`/decodeURIComponent`
+- `(string)`  
+ text to decode
+
+Reversal of /encodeURIComponent
+
+##### **Examples**
+```stscript
+
+/decodeURIComponent quick%20brown%2Ffox |
+// returns quick brown/fox |
+```
+
+
 #### <a id="lalib-help-cmd-wordcount"></a>`/wordcount`
 - `[language:string]? = en`  
  *(optional)* Two character language code according to IETF BCP 47
@@ -1429,7 +1457,7 @@ Copies value into clipboard.
 
 
 #### <a id="lalib-help-cmd-download"></a>`/download`
-- `[name:string]? = SillyTavern-2025-01-22T22:18:07.912Z`  
+- `[name:string]? = SillyTavern-2025-02-16T13:04:54.435Z`  
  *(optional)* the filename for the downloaded file
 - `[ext:string]? = txt`  
  *(optional)* the file extension for the downloaded file
