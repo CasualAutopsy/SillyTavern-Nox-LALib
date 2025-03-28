@@ -2971,6 +2971,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'diff',
                 html > body {
                     .popup.wide_dialogue_popup.large_dialogue_popup:has(.lalib--diffContainer) {
                         aspect-ratio: unset;
+                        width: unset;
                     }
                     .lalib--diffWrapper {
                         display: flex;
