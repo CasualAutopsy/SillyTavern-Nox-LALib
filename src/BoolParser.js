@@ -266,7 +266,7 @@ export class BoolParser {
         }
         return this.testSymbol(')');
     }
-    parseExpression() {
+    parseExpression(openMath = true, openOp = true, openComp = true) {
         this.depth++;
         if (this.depth != 0) this.take(); // take openig "("
         this.discardWhitespace();
@@ -296,11 +296,11 @@ export class BoolParser {
             // - comparison
             // - operator
             // - math operator
-            if (this.testComparison()) {
+            if (openComp && this.testComparison()) {
                 value = this.parseComparison(value);
-            } else if (this.testOperator()) {
+            } else if (openOp && this.testOperator()) {
                 value = this.parseOperator(value);
-            } else if (this.testMath()) {
+            } else if (openMath && this.testMath()) {
                 value = this.parseMath(value);
             }
         } else {
@@ -894,7 +894,7 @@ export class BoolParser {
         // - literal
         let value;
         if (this.testExpression()) {
-            value = this.parseExpression();
+            value = this.parseExpression(false, false, false);
         } else if (this.testLiteral()) {
             value = this.parseLiteral(false, false, false);
         } else if (this.verify) {
@@ -959,7 +959,7 @@ export class BoolParser {
         } else if (this.testPreMath()) {
             value = this.parsePreMath();
         } else if (this.testExpression()) {
-            value = this.parseExpression();
+            value = this.parseExpression(true, false, true);
         } else if (this.testLiteral()) {
             value = this.parseLiteral(true, false, true);
         } else if (this.verify) {
