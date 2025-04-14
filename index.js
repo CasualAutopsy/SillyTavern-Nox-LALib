@@ -6435,15 +6435,16 @@ const messageOnUnlistenListen = ()=>messageOnListeners.forEach(it=>{
     it.unlisten();
     it.listen();
 });
+const messageOnUnlistenListenDebounced = debounce(messageOnUnlistenListen);
 eventSource.on(event_types.CHAT_CHANGED, ()=>{
     messageOnListeners.forEach(it=>it.unlisten());
     while (messageOnListeners.pop());
 });
-eventSource.on(event_types.USER_MESSAGE_RENDERED, ()=>messageOnUnlistenListen());
-eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, ()=>messageOnUnlistenListen());
-eventSource.on(event_types.MESSAGE_SWIPED, ()=>messageOnUnlistenListen());
-eventSource.on(event_types.MESSAGE_UPDATED, ()=>messageOnUnlistenListen());
-eventSource.on(event_types.MESSAGE_DELETED, ()=>messageOnUnlistenListen());
+eventSource.on(event_types.USER_MESSAGE_RENDERED, ()=>messageOnUnlistenListenDebounced());
+eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, ()=>messageOnUnlistenListenDebounced());
+eventSource.on(event_types.MESSAGE_SWIPED, ()=>messageOnUnlistenListenDebounced());
+eventSource.on(event_types.MESSAGE_UPDATED, ()=>messageOnUnlistenListenDebounced());
+eventSource.on(event_types.MESSAGE_DELETED, ()=>messageOnUnlistenListenDebounced());
 SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'message-on',
     /**
      * @param {{event:string, callback:SlashCommandClosure, quiet:string}} args
