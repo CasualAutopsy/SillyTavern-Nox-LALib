@@ -20,7 +20,7 @@ Library of STScript commands.
 - [Group Chats](#lalib-help-group-Group_Chats) ([memberpos](#lalib-help-cmd-memberpos), [group-get](#lalib-help-cmd-group_get))
 - [Conditionals - switch](#lalib-help-group-Conditionals_switch) ([switch](#lalib-help-cmd-switch), [case](#lalib-help-cmd-case))
 - [Conditionals - if](#lalib-help-group-Conditionals_if) ([ife](#lalib-help-cmd-ife), [elseif](#lalib-help-cmd-elseif), [else](#lalib-help-cmd-else), [then](#lalib-help-cmd-then))
-- [World Info](#lalib-help-group-World_Info) ([wi-list-books](#lalib-help-cmd-wi_list_books), [wi-list-entries](#lalib-help-cmd-wi_list_entries), [wi-activate](#lalib-help-cmd-wi_activate))
+- [World Info](#lalib-help-group-World_Info) ([wi-list-books](#lalib-help-cmd-wi_list_books), [wi-list-entries](#lalib-help-cmd-wi_list_entries), [wi-activate](#lalib-help-cmd-wi_activate), [wi-trigger](#lalib-help-cmd-wi_trigger))
 - [Costumes / Sprites](#lalib-help-group-Costumes_Sprites) ([costumes](#lalib-help-cmd-costumes))
 - [Quick Replies](#lalib-help-group-Quick_Replies) ([qr-edit](#lalib-help-cmd-qr_edit), [qr-add](#lalib-help-cmd-qr_add))
 - [Chat Messages](#lalib-help-group-Chat_Messages) ([swipes-get](#lalib-help-cmd-swipes_get), [swipes-get](#lalib-help-cmd-swipes_get), [swipes-list](#lalib-help-cmd-swipes_list), [swipes-count](#lalib-help-cmd-swipes_count), [swipes-index](#lalib-help-cmd-swipes_index), [swipes-add](#lalib-help-cmd-swipes_add), [swipes-del](#lalib-help-cmd-swipes_del), [swipes-go](#lalib-help-cmd-swipes_go), [swipes-swipe](#lalib-help-cmd-swipes_swipe), [message-edit](#lalib-help-cmd-message_edit), [message-move](#lalib-help-cmd-message_move), [message-get](#lalib-help-cmd-message_get), [message-list](#lalib-help-cmd-message_list))
@@ -1457,7 +1457,7 @@ Copies value into clipboard.
 
 
 #### <a id="lalib-help-cmd-download"></a>`/download`
-- `[name:string]? = SillyTavern-2025-02-16T13:04:54.435Z`  
+- `[name:string]? = SillyTavern-2025-04-14T23:05:10.819Z`  
  *(optional)* the filename for the downloaded file
 - `[ext:string]? = txt`  
  *(optional)* the file extension for the downloaded file
@@ -1813,6 +1813,31 @@ Activate World Info entries based on the current chat and trigger their Automati
 ```stscript
 
 /wi-activate |
+```
+
+
+#### <a id="lalib-help-cmd-wi_trigger"></a>`/wi-trigger`
+- `[file:string]`  
+ book name
+- `[uid:number]`  
+ record UID
+- `[now=true|false]?`  
+ *(optional)* true: trigger entry for swipes or /gen, false: trigger for next chat reply
+
+
+Trigger a World Info entry for the next generated message.<br>
+<strong>⚠️ WARNING: if the entry is not sticky, it will be set to sticky = 1</strong>
+
+##### **Examples**
+```stscript
+
+/wi-trigger file="A Demo World" uid=1 |
+// Trigger the entry for the next chat reply. |
+```
+```stscript
+
+/wi-trigger file="A Demo World" uid=1 now= |
+// Trigger the entry for the next swipe. |
 ```
 
 
@@ -2377,7 +2402,7 @@ Swap roles (user/AI) for all messages in the chat, or for a selected message or 
 #### <a id="lalib-help-cmd-timestamp"></a>`/timestamp`
 
 
-Returns the number of milliseconds midnight at the beginning of January 1, 1970, UTC.
+Returns the number of milliseconds since midnight at the beginning of January 1, 1970, UTC.
 
 ##### **Examples**
 ```stscript
