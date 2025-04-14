@@ -14,9 +14,9 @@ import { commonEnumProviders, enumIcons } from '../../../slash-commands/SlashCom
 import { enumTypes, SlashCommandEnumValue } from '../../../slash-commands/SlashCommandEnumValue.js';
 import { SlashCommandNamedArgumentAssignment } from '../../../slash-commands/SlashCommandNamedArgumentAssignment.js';
 import { SlashCommandParser } from '../../../slash-commands/SlashCommandParser.js';
-import { debounce, delay, escapeRegex, isFalseBoolean, isTrueBoolean, uuidv4 } from '../../../utils.js';
+import { debounce, delay, escapeRegex, getStringHash, isFalseBoolean, isTrueBoolean, uuidv4 } from '../../../utils.js';
 import { evalBoolean, parseBooleanOperands } from '../../../variables.js';
-import { getWorldInfoPrompt, world_info } from '../../../world-info.js';
+import { getWorldInfoPrompt, loadWorldInfo, saveWorldInfo, world_info } from '../../../world-info.js';
 import { quickReplyApi } from '../../quick-reply/index.js';
 import { QuickReplySet } from '../../quick-reply/src/QuickReplySet.js';
 import { BoolParser } from './src/BoolParser.js';
@@ -5385,6 +5385,80 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'wi-activate'
                     /wi-activate |
                 `,
                 '',
+            ],
+        ],
+    ),
+}));
+
+SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'wi-trigger',
+    /**
+     * @param {import('../../../slash-commands/SlashCommand.js').NamedArguments&{
+     *  file:string,
+     *  uid:string,
+     *  now:string,
+     * }} args
+     * @param {*} value
+     */
+    callback: async(args, value)=>{
+        const world = await loadWorldInfo(args.file);
+        const entry = world.entries[args.uid];
+        if (!entry.sticky) {
+            entry.sticky = 1;
+            await saveWorldInfo(args.file, world, true);
+        }
+        const hash = getStringHash(JSON.stringify({
+            uid: entry.uid,
+            world: args.file,
+            ...entry,
+            decorators: [],
+            content: entry.content,
+        }));
+        const offset = isTrueFlag(args.now) ? -2 : 0;
+        chat_metadata.timedWorldInfo.sticky[`${args.file}.${entry.uid}`] = {
+            hash,
+            start: chat.length + offset,
+            end: chat.length + offset + 2,
+            protected: false,
+        };
+        return '';
+    },
+    namedArgumentList: [
+        SlashCommandNamedArgument.fromProps({
+            name: 'file',
+            description: 'book name',
+            typeList: [ARGUMENT_TYPE.STRING],
+            isRequired: true,
+            enumProvider: commonEnumProviders.worlds,
+        }),
+        SlashCommandNamedArgument.fromProps({
+            name: 'uid',
+            description: 'record UID',
+            typeList: [ARGUMENT_TYPE.NUMBER],
+            isRequired: true,
+        }),
+        SlashCommandNamedArgument.fromProps({
+            name: 'now',
+            description: 'true: trigger entry for swipes or /gen, false: trigger for next chat reply',
+            typeList: [ARGUMENT_TYPE.BOOLEAN],
+        }),
+    ],
+    helpString: help(
+        `
+            Trigger a World Info entry for the next generated message.<br>
+            <strong>⚠️ WARNING: if the entry is not sticky, it will be set to sticky = 1</strong>
+        `,
+        [
+            [
+                `
+                    /wi-trigger file="A Demo World" uid=1 |
+                `,
+                'Trigger the entry for the next chat reply.',
+            ],
+            [
+                `
+                    /wi-trigger file="A Demo World" uid=1 now= |
+                `,
+                'Trigger the entry for the next swipe.',
             ],
         ],
     ),
