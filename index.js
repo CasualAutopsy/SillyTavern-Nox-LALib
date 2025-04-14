@@ -6683,7 +6683,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'timestamp',
     },
     helpString: help(
         `
-            Returns the number of milliseconds midnight at the beginning of January 1, 1970, UTC.
+            Returns the number of milliseconds since midnight at the beginning of January 1, 1970, UTC.
         `,
         [
             [
