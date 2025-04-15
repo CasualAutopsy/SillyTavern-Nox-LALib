@@ -97,7 +97,7 @@ function makeBoolEnumProvider() {
         new SlashCommandEnumValue('negation', '!a', enumTypes.enum, enumIcons.boolean, (input)=>true, (input)=>input),
         new SlashCommandEnumValue('logical operator', 'a and b  |  a xor b  |  a or b', enumTypes.enum, enumIcons.boolean, (input)=>true, (input)=>input),
         new SlashCommandEnumValue('sub-expression', '(...)', enumTypes.enum, enumIcons.boolean, (input)=>true, (input)=>input),
-        new SlashCommandEnumValue('comparison operator', 'a == b  |  a != b  |  a &gt; b  |  a &gt;= b  |  a &lt; b  |  a &lt;= b  |  a in b  |  a not in b  | a <=> b', enumTypes.enum, enumIcons.boolean, (input)=>true, (input)=>input),
+        new SlashCommandEnumValue('comparison operator', 'a == b  |  a === b  |  a != b  |  a !== b  |  a &gt; b  |  a &gt;= b  |  a &lt; b  |  a &lt;= b  |  a in b  |  a not in b  | a <=> b', enumTypes.enum, enumIcons.boolean, (input)=>true, (input)=>input),
         new SlashCommandEnumValue('type check', 'a is string  |  a is number  |  a is boolean  |  a is list  |  a is dictionary  |  a is closure', enumTypes.enum, enumIcons.boolean, (input)=>true, (input)=>input),
         new SlashCommandEnumValue('regex', '/pattern/flags ← escape pipes! \\|', enumTypes.enum, enumIcons.boolean, (input)=>true, (input)=>input),
         new SlashCommandEnumValue('arithmetic operator', 'a + b  |  a - b  |  a * b  |  a / b  |  a // b  |  a % b  |  a ** b', enumTypes.enum, enumIcons.boolean, (input)=>true, (input)=>input),

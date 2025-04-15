@@ -152,7 +152,9 @@ Parentheses `(...)` delimit sub-expressions. Whether to aid in readability, chan
 The following operations are available to compare two values.
 
 - `a == b` - `a` equals `b`
+- `a === b` - `a` strictly equals `b`
 - `a != b` - `a` does not equal `b`
+- `a !== b` - `a` does not strictly equal `b`
 - `a > b` - `a` is greater than `b`
 - `a >= b` - `a` is greater than or equal to `b`
 - `a < b` - `a` is less than `b`
@@ -168,6 +170,11 @@ The following operations are available to compare two values.
 /= 1 >= 1 | // evaluates to true |
 /= 1 < 2 | // evaluates to true |
 /= 2 <= 2 | // evaluates to true |
+
+/= 0 == '' | // evaluates to true |
+/= 0 === '' | // evaluates to false |
+/= 1 == '1' | // evaluates to true |
+/= 1 === '1' | // evaluates to false |
 
 /= 2 in [1,2,3] | // evaluates to true |
 /= 'oo' in 'foo' | // evaluates to true |

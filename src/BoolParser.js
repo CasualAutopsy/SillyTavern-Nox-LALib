@@ -693,11 +693,11 @@ export class BoolParser {
 
 
     testComparison() {
-        return this.testSymbol(/==|!=|<(?:=>?)?|>=?|in |not in |starts with |ends with /);
+        return this.testSymbol(/===|==|!==|!=|<(?:=>?)?|>=?|in |not in |starts with |ends with /);
     }
     parseComparison(a) {
         this.partIndex.push(BOOL_PART.Comparison);
-        const op = /^(==|!=|<(?:=>?)?|>=?|in |not in |starts with |ends with )/.exec(this.charAhead)[0];
+        const op = /^(===|==|!==|!=|<(?:=>?)?|>=?|in |not in |starts with |ends with )/.exec(this.charAhead)[0];
         this.take(op.length);
         this.discardWhitespace();
         // comparison operation must be followed by:
@@ -722,11 +722,19 @@ export class BoolParser {
             let v;
             if (aa instanceof RegExp) {
                 switch (op.trim()) {
+                    case '===': {
+                        v = ()=>aa.test(bb);
+                        break;
+                    }
                     case '==': {
                         v = ()=>aa.test(bb);
                         break;
                     }
                     case '!=': {
+                        v = ()=>!aa.test(bb);
+                        break;
+                    }
+                    case '!==': {
                         v = ()=>!aa.test(bb);
                         break;
                     }
@@ -744,11 +752,19 @@ export class BoolParser {
                 }
             } else if (bb instanceof RegExp) {
                 switch (op.trim()) {
+                    case '===': {
+                        v = ()=>bb.test(aa);
+                        break;
+                    }
                     case '==': {
                         v = ()=>bb.test(aa);
                         break;
                     }
                     case '!=': {
+                        v = ()=>!bb.test(aa);
+                        break;
+                    }
+                    case '!==': {
                         v = ()=>!bb.test(aa);
                         break;
                     }
@@ -758,12 +774,20 @@ export class BoolParser {
                 }
             } else {
                 switch (op.trim()) {
+                    case '===': {
+                        v = ()=>aa === bb;
+                        break;
+                    }
                     case '==': {
                         v = ()=>aa == bb;
                         break;
                     }
                     case '!=': {
                         v = ()=>aa != bb;
+                        break;
+                    }
+                    case '!==': {
+                        v = ()=>aa !== bb;
                         break;
                     }
                     case '<': {
