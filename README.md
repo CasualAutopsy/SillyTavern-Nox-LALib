@@ -1763,6 +1763,8 @@ See <a href="javascript:;" data-lalib-exec="/lalib? expressions"><code>/lalib? e
 #### <a id="lalib-help-cmd-wi_list_books"></a>`/wi-list-books`
 - `[source=true|false]? = false`  
  *(optional)* whether to include the activation source for each book
+- `[all=true|false]? = false`  
+ *(optional)* whether to include all books, even inactive ones
 
 
 Get a list of currently active World Info books. Use <code>source=</code> to get a dictionary of lists where the keys are the activation sources.
@@ -1778,6 +1780,11 @@ Get a list of currently active World Info books. Use <code>source=</code> to get
 /wi-list-books source= |
 /json-pretty |
 /comment Currently active WI books:{{newline}}```json{{newline}}{{pipe}}{{newline}}``` |
+```
+```stscript
+
+/wi-list-books all= |
+// returns a list of all books (active and inactive) |
 ```
 
 

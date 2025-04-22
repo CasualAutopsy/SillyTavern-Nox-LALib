@@ -16,7 +16,7 @@ import { SlashCommandNamedArgumentAssignment } from '../../../slash-commands/Sla
 import { SlashCommandParser } from '../../../slash-commands/SlashCommandParser.js';
 import { debounce, delay, escapeRegex, getStringHash, isFalseBoolean, isTrueBoolean, uuidv4 } from '../../../utils.js';
 import { evalBoolean, parseBooleanOperands } from '../../../variables.js';
-import { getWorldInfoPrompt, loadWorldInfo, saveWorldInfo, world_info } from '../../../world-info.js';
+import { getWorldInfoPrompt, loadWorldInfo, saveWorldInfo, world_info, world_names } from '../../../world-info.js';
 import { quickReplyApi } from '../../quick-reply/index.js';
 import { QuickReplySet } from '../../quick-reply/src/QuickReplySet.js';
 import { BoolParser } from './src/BoolParser.js';
@@ -5214,13 +5214,14 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'then',
 
 
 
-const getBookNamesWithSource = ()=>{
+const getBookNamesWithSource = (all = false)=>{
     const context = getContext();
-    return {
+    const books = {
         global: world_info.globalSelect ?? [],
         chat: chat_metadata.world_info ?? null,
         character: characters[context.characterId]?.data?.character_book?.name ?? null,
         characterAuxiliary: world_info.charLore?.find(it=>it.name == characters[context.characterId]?.avatar?.split('.')?.slice(0,-1)?.join('.'))?.extraBooks ?? [],
+        /**@type {{[char:string]:{character:string, auxiliary:string[]}}} */
         group: groups
             .find(it=>it.id == context.groupId)
             ?.members
@@ -5233,9 +5234,20 @@ const getBookNamesWithSource = ()=>{
                 return dict;
             }, {})
             ?? {},
+        inactive: [],
     };
+    const flat = Object.values({
+        ...books,
+        group:Object.values(books.group).map(it=>[it.character, ...it.auxiliary]).flat(),
+    }).flat().filter(Boolean);
+    console.log({ flat, world_names });
+    books.inactive.push(...world_names.filter(it=>!flat.includes(it)));
+    return books;
 };
-const getBookNames = ()=>{
+const getBookNames = (all = false)=>{
+    if (all) {
+        return world_names;
+    }
     const context = getContext();
     const names = [
         ...(world_info.globalSelect ?? []),
@@ -5258,14 +5270,21 @@ const getBookNames = ()=>{
 SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'wi-list-books',
     callback: async (namedArgs) => {
         if (isTrueFlag(namedArgs.source)) {
-            return JSON.stringify(getBookNamesWithSource());
+            return JSON.stringify(getBookNamesWithSource(isTrueFlag(namedArgs.all)));
         }
-        return JSON.stringify(getBookNames());
+        return JSON.stringify(getBookNames(isTrueFlag(namedArgs.all)));
     },
     namedArgumentList: [
         SlashCommandNamedArgument.fromProps({
             name: 'source',
             description: 'whether to include the activation source for each book',
+            typeList: [ARGUMENT_TYPE.BOOLEAN],
+            defaultValue: 'false',
+            enumList: ['true', 'false'],
+        }),
+        SlashCommandNamedArgument.fromProps({
+            name: 'all',
+            description: 'whether to include all books, even inactive ones',
             typeList: [ARGUMENT_TYPE.BOOLEAN],
             defaultValue: 'false',
             enumList: ['true', 'false'],
@@ -5289,6 +5308,12 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'wi-list-book
                     /comment Currently active WI books:{{newline}}\`\`\`json{{newline}}{{pipe}}{{newline}}\`\`\` |
                 `,
                 '',
+            ],
+            [
+                `
+                    /wi-list-books all= |
+                `,
+                'returns a list of all books (active and inactive)',
             ],
         ],
     ),
