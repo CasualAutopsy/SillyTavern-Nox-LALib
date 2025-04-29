@@ -7040,7 +7040,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'fetch',
     callback: async (args, value) => {
         try {
             const whitelist = JSON.parse(localStorage.getItem('lalib-fetch') ?? '[]');
-            const url = new URL(value.toString());
+            const url = new URL(value.toString(), location.href);
             let connect = whitelist.includes(url.hostname) || whitelist.includes(`${url.hostname}${url.pathname}`);
             if (!connect) {
                 const dom = document.createElement('div'); {
@@ -7119,27 +7119,34 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'fetch',
                 return '';
             }
             const fn = uuidv4();
-            const dlResponse = await fetch('/api/assets/download', {
-                method: 'POST',
-                headers: getRequestHeaders(),
-                body: JSON.stringify({
-                    url: value,
-                    filename: fn,
-                    category: 'ambient',
-                }),
-            });
-            if (!dlResponse.ok) throw new Error(`/fetch - failed to fetch URL: ${value}`);
-            const contentResponse = await fetch(`/assets/ambient/${fn}`);
+            let contentResponse;
+            if (url.origin == location.origin) {
+                contentResponse = await fetch(url.toString());
+            } else {
+                const dlResponse = await fetch('/api/assets/download', {
+                    method: 'POST',
+                    headers: getRequestHeaders(),
+                    body: JSON.stringify({
+                        url: url.toString(),
+                        filename: fn,
+                        category: 'ambient',
+                    }),
+                });
+                if (!dlResponse.ok) throw new Error(`/fetch - failed to fetch URL: ${value}`);
+                contentResponse = await fetch(`/assets/ambient/${fn}`);
+            }
             if (!contentResponse.ok) throw new Error(`/fetch - failed to fetch URL: ${value}`);
             const text = await contentResponse.text();
-            fetch('/api/assets/delete', {
-                method: 'POST',
-                headers: getRequestHeaders(),
-                body: JSON.stringify({
-                    filename: fn,
-                    category: 'ambient',
-                }),
-            });
+            if (url.origin != location.origin) {
+                fetch('/api/assets/delete', {
+                    method: 'POST',
+                    headers: getRequestHeaders(),
+                    body: JSON.stringify({
+                        filename: fn,
+                        category: 'ambient',
+                    }),
+                });
+            }
             return text;
         }
         catch (ex) {
