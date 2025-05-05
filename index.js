@@ -6393,7 +6393,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'message-list
     */
     callback: (args, value)=>{
         if (value.length == 0) value = '0--1';
-        return JSON.stringify(getRange(value, chat));
+        return JSON.stringify(getRange(value, chat.map((it,id)=>({ id, ...it }))));
     },
     unnamedArgumentList: [
         SlashCommandArgument.fromProps({ description: 'range of message IDs to get, negative numbers to start at last message',
