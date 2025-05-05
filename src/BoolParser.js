@@ -262,7 +262,7 @@ export class BoolParser {
     testExpressionEnd() {
         if (this.endOfText) {
             if (this.depth == 0 || !this.verify) return true;
-            throw new Error('Unexpected end of expression');
+            throw new Error(`Unexpected end of expression: ${this.behind}${this.char} --??-- ${this.ahead}`);
         }
         return this.testSymbol(')');
     }
@@ -304,7 +304,7 @@ export class BoolParser {
                 value = this.parseMath(value);
             }
         } else {
-            throw new Error('Unexpected end of expression');
+            throw new Error(`Unexpected end of expression: ${this.behind}${this.char} --??-- ${this.ahead}`);
         }
         return value;
     }
