@@ -6186,13 +6186,16 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'message-edit
         if (mes.swipes) {
             mes.swipes[mes.swipe_id ?? 0] = value;
         }
-        document.querySelector(`#chat [mesid="${mesId}"] .mes_text`).innerHTML = messageFormatting(
-            value,
-            mes.name,
-            mes.is_system,
-            mes.is_user,
-            mesId,
-        );
+        const mesEl = document.querySelector(`#chat [mesid="${mesId}"] .mes_text`);
+        if (mesEl) {
+            mesEl.innerHTML = messageFormatting(
+                value,
+                mes.name,
+                mes.is_system,
+                mes.is_user,
+                mesId,
+            );
+        }
         await eventSource.emit(event_types.MESSAGE_EDITED, mesId);
         await eventSource.emit(event_types.MESSAGE_UPDATED, mesId);
         if (isTrueFlag(args.await)) {
