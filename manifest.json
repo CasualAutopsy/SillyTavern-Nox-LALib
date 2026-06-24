@@ -1,11 +1,11 @@
 {
-    "display_name": "LALib",
+    "display_name": "LALib (Modified)",
     "loading_order": 100,
     "requires": [],
     "optional": [],
     "js": "index.js",
     "css": "",
-    "author": "LenAnderson",
+    "author": "LenAnderson (Modified by Nox)",
     "version": "3.12.1",
-    "homePage": "https://github.com/LenAnderson/SillyTavern-LALib"
+    "homePage": "https://github.com/CasualAutopsy/SillyTavern-Nox-LALib"
 }

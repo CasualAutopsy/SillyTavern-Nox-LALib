@@ -1,26 +1,40 @@
+/* eslint-disable no-restricted-globals */
+/* eslint-disable no-undef */
+/* eslint-disable no-unused-vars */
 // @ts-nocheck
-import { characters, chat, chat_metadata, eventSource, event_types, extractMessageBias, getPastCharacterChats, getRequestHeaders, messageFormatting, reloadMarkdownProcessor, saveChatConditional, saveChatDebounced, saveSettingsDebounced, sendSystemMessage, showSwipeButtons, this_chid } from '../../../../script.js';
-import { getMessageTimeStamp } from '../../../RossAscends-mods.js';
-import { extension_settings, getContext, saveMetadataDebounced } from '../../../extensions.js';
-import { findGroupMemberId, getGroupPastChats, groups, selected_group } from '../../../group-chats.js';
-import { Popup, POPUP_TYPE } from '../../../popup.js';
-import { executeSlashCommands, executeSlashCommandsWithOptions } from '../../../slash-commands.js';
-import { SlashCommand } from '../../../slash-commands/SlashCommand.js';
-import { SlashCommandAbortController } from '../../../slash-commands/SlashCommandAbortController.js';
-import { ARGUMENT_TYPE, SlashCommandArgument, SlashCommandNamedArgument } from '../../../slash-commands/SlashCommandArgument.js';
-import { SlashCommandBreakController } from '../../../slash-commands/SlashCommandBreakController.js';
-import { SlashCommandClosure } from '../../../slash-commands/SlashCommandClosure.js';
-import { SlashCommandClosureResult } from '../../../slash-commands/SlashCommandClosureResult.js';
-import { commonEnumProviders, enumIcons } from '../../../slash-commands/SlashCommandCommonEnumsProvider.js';
-import { enumTypes, SlashCommandEnumValue } from '../../../slash-commands/SlashCommandEnumValue.js';
-import { SlashCommandNamedArgumentAssignment } from '../../../slash-commands/SlashCommandNamedArgumentAssignment.js';
-import { SlashCommandParser } from '../../../slash-commands/SlashCommandParser.js';
-import { debounce, delay, escapeRegex, getStringHash, isFalseBoolean, isTrueBoolean, uuidv4 } from '../../../utils.js';
-import { evalBoolean, parseBooleanOperands } from '../../../variables.js';
-import { getWorldInfoPrompt, loadWorldInfo, saveWorldInfo, world_info, world_names } from '../../../world-info.js';
-import { quickReplyApi } from '../../quick-reply/index.js';
-import { QuickReplySet } from '../../quick-reply/src/QuickReplySet.js';
-import { BoolParser } from './src/BoolParser.js';
+import { trim, help } from './lib/cmdsHelpers.js';
+
+import { initializeLoggingCMDs } from './cmds/logging.js';
+import { initializeAsyncCMDs } from './cmds/async.js';
+import { initializeAudioCMDs } from './cmds/audio.js';
+
+const { BoolParser } = await import(/* webpackIgnore: true */'../src/BoolParser.js');
+
+const { characters, chat, chat_metadata, event_types, extractMessageBias, getPastCharacterChats, getRequestHeaders, messageFormatting, reloadMarkdownProcessor, saveChatConditional, saveChatDebounced, saveSettingsDebounced, sendSystemMessage, showSwipeButtons, this_chid } = await import(/* webpackIgnore: true */'/script.js');
+const { getMessageTimeStamp } = await import(/* webpackIgnore: true */'/scripts/RossAscends-mods.js');
+const { extension_settings, getContext, saveMetadataDebounced } = await import(/* webpackIgnore: true */'/scripts/extensions.js');
+const { findGroupMemberId, getGroupPastChats, groups, selected_group } = await import(/* webpackIgnore: true */'/scripts/group-chats.js');
+const { executeSlashCommands } = await import(/* webpackIgnore: true */'/scripts/slash-commands.js');
+const { SlashCommandBreakController } = await import(/* webpackIgnore: true */'/scripts/slash-commands/SlashCommandBreakController.js');
+const { SlashCommandClosure } = await import(/* webpackIgnore: true */'/scripts/slash-commands/SlashCommandClosure.js');
+const { SlashCommandClosureResult } = await import(/* webpackIgnore: true */'/scripts/slash-commands/SlashCommandClosureResult.js');
+const { commonEnumProviders, enumIcons } = await import(/* webpackIgnore: true */'/scripts/slash-commands/SlashCommandCommonEnumsProvider.js');
+const { enumTypes, SlashCommandEnumValue } = await import(/* webpackIgnore: true */'/scripts/slash-commands/SlashCommandEnumValue.js');
+const { SlashCommandNamedArgumentAssignment } = await import(/* webpackIgnore: true */'/scripts/slash-commands/SlashCommandNamedArgumentAssignment.js');
+const { debounce, delay, escapeRegex, getStringHash, isFalseBoolean, isTrueBoolean, uuidv4 } = await import(/* webpackIgnore: true */'/scripts/utils.js');
+const { evalBoolean, parseBooleanOperands } = await import(/* webpackIgnore: true */'/scripts/variables.js');
+const { getWorldInfoPrompt, loadWorldInfo, saveWorldInfo, world_info, world_names } = await import(/* webpackIgnore: true */'/scripts/world-info.js');
+const { quickReplyApi } = await import(/* webpackIgnore: true */'/scripts/extensions/quick-reply/index.js');
+const { QuickReplySet } = await import(/* webpackIgnore: true */'/scripts/extensions/quick-reply/src/QuickReplySet.js');
+
+const {
+    eventSource,
+    SlashCommandParser, SlashCommand,
+    SlashCommandArgument, SlashCommandNamedArgument, ARGUMENT_TYPE,
+    executeSlashCommandsWithOptions,
+    Popup, POPUP_TYPE
+} = SillyTavern.getContext();
+
 
 
 function getListVar(local, global, literal) {
@@ -73,12 +87,12 @@ function getRange(text, value) {
     const startIdx = parseInt(start);
     const endIdx = parseInt(end);
     if (!isRange) {
-        if (startIdx == -1) {
+        if (startIdx === -1) {
             return value.slice(startIdx);
         }
         return value.slice(startIdx, startIdx + 1);
     }
-    if (end === undefined || endIdx == -1) {
+    if (end === undefined || endIdx === -1) {
         return value.slice(startIdx);
     }
     return value.slice(startIdx, Number(end) + 1);
@@ -117,7 +131,7 @@ function makeBoolOrClosureEnumProvider(offset = 0) {
     return (executor, scope)=>{
         // no args
         //  -> start expression, start bool closure
-        if (executor.unnamedArgumentList.length == 0 + offset || executor.unnamedArgumentList.at(0 + offset).value == '') {
+        if (executor.unnamedArgumentList.length === 0 + offset || executor.unnamedArgumentList.at(0 + offset).value === '') {
             return [
                 ...makeBoolEnumProvider()(),
                 new SlashCommandEnumValue('Closure', 'Closure returning true or false', enumTypes.command, enumIcons.closure, (input)=>true, (input)=>input),
@@ -125,7 +139,7 @@ function makeBoolOrClosureEnumProvider(offset = 0) {
         }
         // 1 arg, starts with {:
         //  -> continue bool closure
-        if (executor.unnamedArgumentList.length == 1 + offset && executor.unnamedArgumentList.at(0 + offset).value.toString().startsWith('{:')) {
+        if (executor.unnamedArgumentList.length === 1 + offset && executor.unnamedArgumentList.at(0 + offset).value.toString().startsWith('{:')) {
             return [
                 new SlashCommandEnumValue('Closure', 'Closure returning true or false', enumTypes.command, enumIcons.closure, (input)=>true, (input)=>input),
             ];
@@ -146,7 +160,7 @@ function makeIfWhileEnumProvider(type) {
     return (executor, scope)=>{
         // no args
         //  -> start expression, start bool closure
-        if (executor.unnamedArgumentList.length == 0 || executor.unnamedArgumentList.at(0).value == '') {
+        if (executor.unnamedArgumentList.length === 0 || executor.unnamedArgumentList.at(0).value === '') {
             return [
                 ...makeBoolEnumProvider()(),
                 new SlashCommandEnumValue('Closure', 'Closure returning true or false', enumTypes.command, enumIcons.closure, (input)=>true, (input)=>input),
@@ -154,14 +168,14 @@ function makeIfWhileEnumProvider(type) {
         }
         // 1 arg, starts curly
         //  -> continue bool closure
-        if (executor.unnamedArgumentList.length == 1 && executor.unnamedArgumentList.at(0).value.toString().startsWith('{:')) {
+        if (executor.unnamedArgumentList.length === 1 && executor.unnamedArgumentList.at(0).value.toString().startsWith('{:')) {
             return [
                 new SlashCommandEnumValue('Closure', 'Closure returning true or false', enumTypes.command, enumIcons.closure, (input)=>true, (input)=>input),
             ];
         }
         // 1 arg, closure
         //  -> start then closure
-        if (executor.unnamedArgumentList.length == 1 && executor.unnamedArgumentList.at(0).value instanceof SlashCommandClosure && !executor.unnamedArgumentList.at(0).value.executeNow) {
+        if (executor.unnamedArgumentList.length === 1 && executor.unnamedArgumentList.at(0).value instanceof SlashCommandClosure && !executor.unnamedArgumentList.at(0).value.executeNow) {
             return [
                 new SlashCommandEnumValue('Closure', `Closure to execute ${type} true`, enumTypes.command, enumIcons.closure, (input)=>true, (input)=>input),
             ];
@@ -169,7 +183,7 @@ function makeIfWhileEnumProvider(type) {
         // 1 arg, whitespace after
         //  -> continue expression, start then closure
         // if (executor.unnamedArgumentList.length == 1 && executor.unnamedArgumentList.at(0).end < executor.endUnnamedArgs) {
-        if (executor.unnamedArgumentList.length == 1 && executor.unnamedArgumentList.at(0).end > executor.unnamedArgumentList.at(0).start + executor.unnamedArgumentList.at(0).value.length) {
+        if (executor.unnamedArgumentList.length === 1 && executor.unnamedArgumentList.at(0).end > executor.unnamedArgumentList.at(0).start + executor.unnamedArgumentList.at(0).value.length) {
             return [
                 ...makeBoolEnumProvider()(),
                 new SlashCommandEnumValue('Closure', `Closure to execute ${type} true`, enumTypes.command, enumIcons.closure, (input)=>true, (input)=>input),
@@ -177,7 +191,7 @@ function makeIfWhileEnumProvider(type) {
         }
         // 1 arg
         //  -> continue expression
-        if (executor.unnamedArgumentList.length == 1) {
+        if (executor.unnamedArgumentList.length === 1) {
             return [
                 ...makeBoolEnumProvider()(),
             ];
@@ -230,62 +244,6 @@ function makeIfWhileEnumProvider(type) {
 }
 
 
-
-const trim = (txt)=>{
-    if (txt.split('\n').length < 2) return txt;
-    const indent = /^([     ]*)\S/m.exec(txt)?.[1] ?? '';
-    const re = new RegExp(`^${indent}`, 'mg');
-    return txt.replace(re, '').replace(/\s*$/s, '');
-};
-let help = (text, ex)=>{
-    const converter = new showdown.Converter({
-        emoji: true,
-        literalMidWordUnderscores: true,
-        parseImgDimensions: true,
-        tables: true,
-        underline: true,
-        simpleLineBreaks: false,
-        strikethrough: true,
-        disableForced4SpacesIndentedSublists: true,
-    });
-    return [
-        text ? converter.makeHtml(trim(text)) : '# HELP MISSING',
-        ex ? examples(ex) : '# EXAMPLES MISSING',
-    ].filter(it=>it).join('\n\n');
-};
-/**
- *
- * @param {[code:string, comment:string][]} list
- */
-let examples = (list)=>{
-    const dom = document.createElement('div'); {
-        const title = document.createElement('strong'); {
-            title.textContent = 'Examples:';
-            dom.append(title);
-        }
-        const ul = document.createElement('ul'); {
-            for (const [code, comment] of list) {
-                const li = document.createElement('li'); {
-                    const pre = document.createElement('pre'); {
-                        const c = document.createElement('code'); {
-                            c.classList.add('language-stscript');
-                            c.textContent = trim(code).trim();
-                            pre.append(c);
-                        }
-                        li.append(pre);
-                    }
-                    const comm = document.createElement('span'); {
-                        comm.innerHTML = comment;
-                        li.append(comm);
-                    }
-                    ul.append(li);
-                }
-            }
-            dom.append(ul);
-        }
-    }
-    return dom.outerHTML;
-};
 
 document.body.addEventListener('click', (evt)=>{
     const exec = /**@type {HTMLElement}*/(evt.target).closest?.('[data-lalib-exec]')?.getAttribute('data-lalib-exec');
@@ -475,7 +433,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'and',
             /**@type {string|boolean} */
             let right = args.right;
             try { right = isTrueBoolean(args.right); } catch { /*empty*/ }
-            return JSON.stringify((left && right) == true);
+            return JSON.stringify((left && right) === true);
         }
         for (let v of value) {
             let vv;
@@ -533,7 +491,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'or',
             /**@type {string|boolean} */
             let right = args.right;
             try { right = isTrueBoolean(args.right); } catch { /*empty*/ }
-            return JSON.stringify((left || right) == true);
+            return JSON.stringify((left || right) === true);
         }
         for (let v of value) {
             let vv;
@@ -581,7 +539,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'or',
 
 SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'not',
     callback: (args, value) => {
-        return JSON.stringify(isTrueBoolean(value) != true);
+        return JSON.stringify(isTrueBoolean(value) !== true);
     },
     unnamedArgumentList: [
         SlashCommandArgument.fromProps({
@@ -665,12 +623,12 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'foreach',
             /**@type {SlashCommandClosureResult}*/
             let commandResult;
             if (closure) {
-                if (closure.argumentList.length == 0) {
+                if (closure.argumentList.length === 0) {
                     const arg = new SlashCommandNamedArgumentAssignment();
                     arg.name = 'item';
                     closure.argumentList.push(arg);
                 }
-                if (closure.argumentList.length == 1) {
+                if (closure.argumentList.length === 1) {
                     const arg = new SlashCommandNamedArgumentAssignment();
                     arg.name = 'index';
                     closure.argumentList.push(arg);
@@ -838,12 +796,12 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'map',
             /**@type {SlashCommandClosureResult}*/
             let commandResult;
             if (closure) {
-                if (closure.argumentList.length == 0) {
+                if (closure.argumentList.length === 0) {
                     const arg = new SlashCommandNamedArgumentAssignment();
                     arg.name = 'item';
                     closure.argumentList.push(arg);
                 }
-                if (closure.argumentList.length == 1) {
+                if (closure.argumentList.length === 1) {
                     const arg = new SlashCommandNamedArgumentAssignment();
                     arg.name = 'index';
                     closure.argumentList.push(arg);
@@ -1215,12 +1173,12 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'groupby',
             throw new Error('/groupby requires a list or dictionary to operate on.');
         } else {
             if (closure) {
-                if (closure.argumentList.length == 0) {
+                if (closure.argumentList.length === 0) {
                     const arg = new SlashCommandNamedArgumentAssignment();
                     arg.name = 'item';
                     closure.argumentList.push(arg);
                 }
-                if (closure.argumentList.length == 1) {
+                if (closure.argumentList.length === 1) {
                     const arg = new SlashCommandNamedArgumentAssignment();
                     arg.name = 'index';
                     closure.argumentList.push(arg);
@@ -1428,7 +1386,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'sorte',
             for (let a = 0; a < sortList.length; a++) {
                 lookup[a] = [];
                 for (let b = 0; b < sortList.length; b++) {
-                    if (a == b) continue;
+                    if (a === b) continue;
                     let aa = sortList[a].key;
                     let bb = sortList[b].key;
                     if (typeof aa != 'string') aa = JSON.stringify(aa);
@@ -1569,7 +1527,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'flatten',
      */
     callback: (args, value) => {
         let depth = parseInt(args.depth ?? '1');
-        if (depth == 0) depth = Infinity;
+        if (depth === 0) depth = Infinity;
         return JSON.stringify(JSON.parse(value).flat(depth));
     },
     namedArgumentList: [
@@ -1661,12 +1619,12 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'filter',
             /**@type {SlashCommandClosureResult}*/
             let commandResult;
             if (closure) {
-                if (closure.argumentList.length == 0) {
+                if (closure.argumentList.length === 0) {
                     const arg = new SlashCommandNamedArgumentAssignment();
                     arg.name = 'item';
                     closure.argumentList.push(arg);
                 }
-                if (closure.argumentList.length == 1) {
+                if (closure.argumentList.length === 1) {
                     const arg = new SlashCommandNamedArgumentAssignment();
                     arg.name = 'index';
                     closure.argumentList.push(arg);
@@ -1835,12 +1793,12 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'find',
             /**@type {SlashCommandClosureResult}*/
             let commandResult;
             if (closure) {
-                if (closure.argumentList.length == 0) {
+                if (closure.argumentList.length === 0) {
                     const arg = new SlashCommandNamedArgumentAssignment();
                     arg.name = 'item';
                     closure.argumentList.push(arg);
                 }
-                if (closure.argumentList.length == 1) {
+                if (closure.argumentList.length === 1) {
                     const arg = new SlashCommandNamedArgumentAssignment();
                     arg.name = 'index';
                     closure.argumentList.push(arg);
@@ -2781,7 +2739,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'diff',
         let oldText = args.old;
         let newText = args.new;
         if (isTrueFlag(args.stripcode)) {
-            const stripcode = (text)=>text.split('```').filter((_,idx)=>idx % 2 == 0).join('');
+            const stripcode = (text)=>text.split('```').filter((_,idx)=>idx % 2 === 0).join('');
             oldText = stripcode(oldText);
             newText = stripcode(newText);
         }
@@ -3098,7 +3056,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'segment',
     callback: (args, value) => {
         args.granularity = args.granularity ?? 'word';
         const segments = Array.from(new Intl.Segmenter(args.language ?? 'en', { granularity: args.granularity }).segment(value))
-            .filter(it=>args.granularity != 'word' || it.isWordLike)
+            .filter(it=>args.granularity !== 'word' || it.isWordLike)
             .map(it=>it.segment)
         ;
         return JSON.stringify(segments);
@@ -3301,7 +3259,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 're-replace',
                 /**@type {RegExpExecArray} */
                 let matches;
                 let matchStart = -1;
-                while ((matches = re.exec(text)) != null && matchStart != matches.index) {
+                while ((matches = re.exec(text)) != null && matchStart !== matches.index) {
                     matchStart = matches.index;
                     const copy = closure.getCopy();
                     matches.forEach((match, idx) => {
@@ -3405,7 +3363,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 're-exec',
         const matchList = [];
         let matches;
         let matchStart = -1;
-        while ((matches = re.exec(text)) != null && matchStart != matches.index) {
+        while ((matches = re.exec(text)) != null && matchStart !== matches.index) {
             matchStart = matches.index;
             const dict = {};
             matches.forEach((match, idx) => {
@@ -3607,7 +3565,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'setat',
                     current[ci] = [];
                 }
             }
-            if (index.length == 0) {
+            if (index.length === 0) {
                 current[ci] = value;
             }
             const prev = current;
@@ -3819,13 +3777,13 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'ifempty',
         const list = getListVar(null, null, args.value);
         if (list) {
             if (Array.isArray(list)) {
-                if (list.length == 0) return value;
+                if (list.length === 0) return value;
             } else if (typeof list == 'object') {
-                if (Object.keys(list).length == 0) return value;
+                if (Object.keys(list).length === 0) return value;
             }
         } else {
             const val = getVar(null, null, args.value);
-            if ((val?.length ?? 0) == 0) return value;
+            if ((val?.length ?? 0) === 0) return value;
         }
         return args.value;
     },
@@ -3873,7 +3831,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'ifempty',
 
 SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'ifnullish',
     callback: (args, value) => {
-        if ((args.value?.length ?? 0) == 0) return value;
+        if ((args.value?.length ?? 0) === 0) return value;
         return args.value;
     },
     namedArgumentList: [
@@ -4189,7 +4147,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'char-get',
     callback: (args, value)=>{
         let char;
         if (value) {
-            char = characters.find(it=>it.avatar.toLowerCase() == value.toLowerCase() || it.name.toLowerCase() == value.toLowerCase());
+            char = characters.find(it=>it.avatar.toLowerCase() === value.toLowerCase() || it.name.toLowerCase() === value.toLowerCase());
         } else {
             char = characters[getContext().characterId];
         }
@@ -4198,7 +4156,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'char-get',
         if (args.index) {
             result = char[args.index];
         }
-        if (result == null || result == undefined) return '';
+        if (result == null || result === undefined) return '';
         if (typeof result != 'string') return JSON.stringify(result);
         return result.toString();
     },
@@ -4250,11 +4208,11 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'memberpos',
             toastr.warning('Cannot run /memberpos command outside of a group chat.');
             return '';
         }
-        const group = groups.find(it=>it.id == selected_group);
+        const group = groups.find(it=>it.id === selected_group);
         const name = value.replace(/^(.+?)(\s+(\d+))?$/, '$1');
         const char = characters[findGroupMemberId(name)];
         let index = value.replace(/^(.+?)(\s+(\d+))?$/, '$2');
-        let currentIndex = group.members.findIndex(it=>it == char.avatar);
+        let currentIndex = group.members.findIndex(it=>it === char.avatar);
         if (index === null) {
             return currentIndex.toString();
         }
@@ -4303,16 +4261,16 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'group-get',
      * @param {string} value
      */
     callback: (args, value)=>{
-        const group = groups.find(it=>value ? (it.name.toLowerCase() == value.toLowerCase()) : (it.id == getContext().groupId));
+        const group = groups.find(it=>value ? (it.name.toLowerCase() === value.toLowerCase()) : (it.id === getContext().groupId));
         /**@type {object|string|boolean|number} */
         let result = structuredClone(group);
         if (isTrueBoolean(args.chars)) {
-            result.members = result.members.map(ava=>characters.find(it=>it.avatar == ava));
+            result.members = result.members.map(ava=>characters.find(it=>it.avatar === ava));
         }
         if (args.index) {
             result = result[args.index];
         }
-        if (result == null || result == undefined) return '';
+        if (result == null || result === undefined) return '';
         if (typeof result != 'string') return JSON.stringify(result);
         return result.toString();
     },
@@ -4464,7 +4422,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'case',
         }
         if (data?.break) return args._scope.pipe;
         if (data?.switch !== undefined) {
-            if (data.switch == value || value === undefined) {
+            if (data.switch === value || value === undefined) {
                 data.break = true;
                 args._scope.pipe = JSON.stringify(data);
                 if (closure) {
@@ -4701,7 +4659,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'elseif',
             console.warn('[LALIB]', '[ELSEIF]', 'failed to parse pipe', args._scope.pipe, ex);
         }
         if (data?.if !== undefined) {
-            if (data.scope != args._scope.getVariable('_LALIB_ife_scope')) return '';
+            if (data.scope !== args._scope.getVariable('_LALIB_ife_scope')) return '';
             if (!data.if) {
                 let result;
                 if (closure) {
@@ -4810,7 +4768,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'else',
             console.warn('[LALIB]', '[ELSE]', 'failed to parse pipe', args.value, ex);
         }
         if (data?.if !== undefined && !data?.isHandled) {
-            if (data.scope != args._scope.getVariable('_LALIB_ife_scope')) return '';
+            if (data.scope !== args._scope.getVariable('_LALIB_ife_scope')) return '';
             if (!data.if) {
                 data.isHandled = true;
                 let result;
@@ -4873,71 +4831,6 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'else',
     returns: 'the result of the executed command',
 }));
 
-SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'then',
-    /**
-     *
-     * @param {import('../../../slash-commands/SlashCommand.js').NamedArguments} args
-     * @param {(string|SlashCommandClosure)[]} value
-     */
-    callback: async (args, value) => {
-        toastr.warning('/then is deprecated, please update your script to use the unnamed arguments in /ife or /elseif instead.', '/then (LALib)', { preventDuplicates:true });
-        /**@type {string|SlashCommandClosure} */
-        let command;
-        if (value) {
-            if (value[0] instanceof SlashCommandClosure) {
-                command = value[0];
-            } else {
-                command = value.join(' ');
-            }
-        }
-        let data;
-        try {
-            data = JSON.parse(args._scope.pipe);
-        } catch (ex) {
-            console.warn('[LALIB]', '[THEN]', 'failed to parse pipe', args._scope.pipe, ex);
-        }
-        if (data?.if !== undefined && !data?.isHandled) {
-            if (data.if) {
-                data.isHandled = true;
-                let result;
-                if (command instanceof SlashCommandClosure) {
-                    result = await command.execute();
-                } else {
-                    result = await executeSlashCommandsWithOptions(
-                        command,
-                        {
-                            handleExecutionErrors: false,
-                            handleParserErrors: false,
-                            parserFlags: args._parserFlags,
-                            scope: args._scope,
-                            abortController: args._abortController,
-                        },
-                    );
-                }
-                return result.pipe ?? JSON.stringify(data);
-            }
-        }
-        return args._scope.pipe;
-    },
-    unnamedArgumentList: [
-        SlashCommandArgument.fromProps({
-            description: 'the command to execute',
-            typeList: [ARGUMENT_TYPE.CLOSURE, ARGUMENT_TYPE.SUBCOMMAND],
-            isRequired: true,
-        }),
-    ],
-    splitUnnamedArgument: true,
-    helpString: help(
-        `
-            <div><strong>DEPRECATED</strong></div>
-        `,
-        [
-            ['// DEPRECATED |', ''],
-        ],
-    ),
-    returns: 'the result of the executed command',
-}));
-
 
 
 const getBookNamesWithSource = (all = false)=>{
@@ -4946,16 +4839,16 @@ const getBookNamesWithSource = (all = false)=>{
         global: world_info.globalSelect ?? [],
         chat: chat_metadata.world_info ?? null,
         character: characters[context.characterId]?.data?.character_book?.name ?? null,
-        characterAuxiliary: world_info.charLore?.find(it=>it.name == characters[context.characterId]?.avatar?.split('.')?.slice(0,-1)?.join('.'))?.extraBooks ?? [],
+        characterAuxiliary: world_info.charLore?.find(it=>it.name === characters[context.characterId]?.avatar?.split('.')?.slice(0,-1)?.join('.'))?.extraBooks ?? [],
         /**@type {{[char:string]:{character:string, auxiliary:string[]}}} */
         group: groups
-            .find(it=>it.id == context.groupId)
+            .find(it=>it.id === context.groupId)
             ?.members
-            ?.map(m=>[m, characters.find(it=>it.avatar == m)?.data?.character_book?.name])
+            ?.map(m=>[m, characters.find(it=>it.avatar === m)?.data?.character_book?.name])
             ?.reduce((dict,cur)=>{
                 dict[cur[0]] = {
                     character: cur[1] ?? null,
-                    auxiliary: world_info.charLore?.find(it=>it.name == cur[0].split('.').slice(0,-1).join('.'))?.extraBooks ?? [],
+                    auxiliary: world_info.charLore?.find(it=>it.name === cur[0].split('.').slice(0,-1).join('.'))?.extraBooks ?? [],
                 };
                 return dict;
             }, {})
@@ -4979,13 +4872,13 @@ const getBookNames = (all = false)=>{
         ...(world_info.globalSelect ?? []),
         chat_metadata.world_info,
         characters[context.characterId]?.data?.character_book?.name,
-        ...world_info.charLore?.find(it=>it.name == characters[context.characterId]?.avatar?.split('.')?.slice(0,-1)?.join('.'))?.extraBooks ?? [],
+        ...world_info.charLore?.find(it=>it.name === characters[context.characterId]?.avatar?.split('.')?.slice(0,-1)?.join('.'))?.extraBooks ?? [],
         ...(groups
-            .find(it=>it.id == context.groupId)
+            .find(it=>it.id === context.groupId)
             ?.members
             ?.map(m=>[
-                characters.find(it=>it.avatar == m)?.data?.character_book?.name,
-                ...(world_info.charLore?.find(it=>it.name == m.split('.').slice(0,-1).join('.'))?.extraBooks ?? []),
+                characters.find(it=>it.avatar === m)?.data?.character_book?.name,
+                ...(world_info.charLore?.find(it=>it.name === m.split('.').slice(0,-1).join('.'))?.extraBooks ?? []),
             ])
                 ?? []
         ),
@@ -5286,8 +5179,8 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'qr-edit',
             name: 'set',
             description: 'the name of the quick reply set',
             typeList: [ARGUMENT_TYPE.STRING],
-            enumProvider: (executor) => QuickReplySet.list.
-                filter(qrSet => qrSet.name != String(executor.namedArgumentList.find(x => x.name == 'set')?.value))
+            enumProvider: (executor) => QuickReplySet.list
+                .filter(qrSet => qrSet.name !== String(executor.namedArgumentList.find(x => x.name === 'set')?.value))
                 .map(qrSet => new SlashCommandEnumValue(qrSet.name, null, enumTypes.enum, 'S'))
             ,
         }),
@@ -5295,7 +5188,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'qr-edit',
             name: 'label',
             description: 'the label of the quick reply',
             typeList: [ARGUMENT_TYPE.STRING],
-            enumProvider: (executor) => QuickReplySet.get(String(executor.namedArgumentList.find(x => x.name == 'set')?.value))?.qrList.map(qr => {
+            enumProvider: (executor) => QuickReplySet.get(String(executor.namedArgumentList.find(x => x.name === 'set')?.value))?.qrList.map(qr => {
                 const message = `${qr.automationId ? `[${qr.automationId}]` : ''} ${qr.title || qr.message}`.trim();
                 return new SlashCommandEnumValue(qr.label, message, enumTypes.enum, enumIcons.qr);
             }) ?? [],
@@ -5305,7 +5198,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'qr-edit',
         SlashCommandArgument.fromProps({
             description: 'the label of the quick reply',
             typeList: [ARGUMENT_TYPE.STRING],
-            enumProvider: (executor) => QuickReplySet.get(String(executor.namedArgumentList.find(x => x.name == 'set')?.value))?.qrList.map(qr => {
+            enumProvider: (executor) => QuickReplySet.get(String(executor.namedArgumentList.find(x => x.name === 'set')?.value))?.qrList.map(qr => {
                 const message = `${qr.automationId ? `[${qr.automationId}]` : ''} ${qr.title || qr.message}`.trim();
                 return new SlashCommandEnumValue(qr.label, message, enumTypes.enum, enumIcons.qr);
             }) ?? [],
@@ -5347,8 +5240,8 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'qr-add',
             name: 'set',
             description: 'the name of the quick reply set',
             typeList: [ARGUMENT_TYPE.STRING],
-            enumProvider: (executor) => QuickReplySet.list.
-                filter(qrSet => qrSet.name != String(executor.namedArgumentList.find(x => x.name == 'set')?.value))
+            enumProvider: (executor) => QuickReplySet.list
+                .filter(qrSet => qrSet.name !== String(executor.namedArgumentList.find(x => x.name === 'set')?.value))
                 .map(qrSet => new SlashCommandEnumValue(qrSet.name, null, enumTypes.enum, 'S'))
             ,
         }),
@@ -5678,14 +5571,14 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'swipes-del',
                 }
             }
         } else {
-            swipeList.push(Number(value == '' ? mes.swipe_id : value));
+            swipeList.push(Number(value === '' ? mes.swipe_id : value));
         }
-        if (swipeList.length == mes.swipes.length) throw new Error('/swipes-del cannot delete all swipes');
+        if (swipeList.length === mes.swipes.length) throw new Error('/swipes-del cannot delete all swipes');
         swipeList.reverse();
         const originalSwipe = mes.swipe_id ?? 0;
         for (const swipeId of swipeList) {
             const currentSwipe = mes.swipe_id ?? 0;
-            if (currentSwipe == swipeId) {
+            if (currentSwipe === swipeId) {
                 if (swipeId + 1 < mes.swipes.length) {
                     mes.swipe_id = swipeId;
                 } else {
@@ -5774,7 +5667,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'swipes-del',
             ],
             [
                 `
-                    /swipes-del filter="\'bad word\' in swipe.mes" |
+                    /swipes-del filter="'bad word' in swipe.mes" |
                 `,
                 'delete all swipes with "bad word" in their message text of last message',
             ],
@@ -6007,7 +5900,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'message-move
         }
         /**@type {HTMLTextAreaElement}*/
         const input = document.querySelector('#send_textarea');
-        const restoreFocus = document.activeElement == input;
+        const restoreFocus = document.activeElement === input;
         const edit = /**@type {HTMLElement}*/(document.querySelector(`#chat [mesid="${args.from}"] .mes_edit`));
         const done = /**@type {HTMLElement}*/(document.querySelector(`#chat [mesid="${args.from}"] .mes_edit_done`));
         edit.click();
@@ -6121,7 +6014,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'message-list
     * @param {string} value
     */
     callback: (args, value)=>{
-        if (value.length == 0) value = '0--1';
+        if (value.length === 0) value = '0--1';
         return JSON.stringify(getRange(value, chat.map((it,id)=>({ id, ...it }))));
     },
     unnamedArgumentList: [
@@ -6180,19 +6073,19 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'chat-list',
      */
     callback: async(args, value)=>{
         let character;
-        if (args.char != undefined) {
+        if (args.char !== undefined) {
             const charName = args.char.toLowerCase();
             character =
                 characters.find(it=>
-                    it.avatar.split('.').slice(0, -1).join('.').toLowerCase() == charName
-                    || it.name.toLowerCase() == charName
+                    it.avatar.split('.').slice(0, -1).join('.').toLowerCase() === charName
+                    || it.name.toLowerCase() === charName
                     ,
                 )
-                ?? groups.find(it=>it.name.toLowerCase() == charName);
-        } else if (this_chid != undefined) {
+                ?? groups.find(it=>it.name.toLowerCase() === charName);
+        } else if (this_chid !== undefined) {
             character = characters[this_chid];
-        } else if (selected_group != undefined) {
-            character = groups.find(it=>it.id == selected_group);
+        } else if (selected_group !== undefined) {
+            character = groups.find(it=>it.id === selected_group);
         }
         if (!character) {
             toastr.warning(`No character or group found for: ${args.char ?? this_chid ?? selected_group}`, '/chat-list');
@@ -6364,9 +6257,9 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'message-off'
         const event = args.event ?? '';
         const query = args.query ?? '';
         const id = args.id ?? '';
-        if (event == '' && query == '' && id == '') throw new Error('/message-off requires event= or query= or id= to be set');
+        if (event === '' && query === '' && id === '') throw new Error('/message-off requires event= or query= or id= to be set');
         const check = it=>{
-            return (event == '' || it.event == event) && (query == '' || it.query == query) && (id == '' || it.id == id);
+            return (event === '' || it.event === event) && (query === '' || it.query === query) && (id === '' || it.id === id);
         };
         const listeners = messageOnListeners.filter(check);
         let count = 0;
@@ -6439,7 +6332,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'message-list
 
 SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'role-swap',
     callback: (args, value)=>{
-        const chatRange = value.length == 0 ? chat : getRange(value, chat);
+        const chatRange = value.length === 0 ? chat : getRange(value, chat);
         for (const mes of chatRange) {
             mes.is_user = !mes.is_user;
             document.querySelector(`#chat .mes[mesid="${chat.indexOf(mes)}"]`)?.setAttribute('is_user', mes.is_user);
@@ -6528,127 +6421,13 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'timestamp',
 
 
 // GROUP: Async
-SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'fireandforget',
-    /**
-     *
-     * @param {import('../../../slash-commands/SlashCommand.js').NamedArguments} args
-     * @param {(string|SlashCommandClosure)[]} value
-     */
-    callback: (args, value) => {
-        /**@type {string|SlashCommandClosure} */
-        let command;
-        if (value) {
-            if (value[0] instanceof SlashCommandClosure) {
-                command = value[0];
-            } else {
-                command = value.join(' ');
-            }
-        }
-        if (command instanceof SlashCommandClosure) {
-            /**@type {SlashCommandClosure} */
-            const closure = command;
-            closure.scope.parent = args._scope;
-            closure.execute();
-        } else {
-            executeSlashCommandsWithOptions(
-                command,
-                {
-                    handleExecutionErrors: true,
-                    handleParserErrors: false,
-                    parserFlags: args._parserFlags,
-                    scope: args._scope,
-                },
-            );
-        }
-        return '';
-    },
-    unnamedArgumentList: [
-        SlashCommandArgument.fromProps({
-            description: 'the closure or command to execute',
-            typeList: [ARGUMENT_TYPE.CLOSURE, ARGUMENT_TYPE.SUBCOMMAND],
-            isRequired: true,
-        }),
-    ],
-    splitUnnamedArgument: true,
-    helpString: help(
-        `
-            Execute a closure or command without waiting for it to finish.
-        `,
-        [
-            [
-                `
-                    /fireandforget {:
-                        /delay 1000 |
-                        /echo firing |
-                        /delay 1000 |
-                        /echo fired script is done
-                    :} |
-                    /echo main script is done |
-                `,
-                'will show "main script is done", then "firing", then "fired script is done"',
-            ],
-        ],
-    ),
-}));
+initializeAsyncCMDs();
+
+// GROUP: Logging
+initializeLoggingCMDs();
 
 // GROUP: Audio
-SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'sfx',
-    /**
-     *
-     * @param {{volume:string, await:string}} args
-     * @param {string} value
-     * @returns
-     */
-    callback: async(args, value)=>{
-        const response = await fetch(value, { headers: { responseType: 'arraybuffer' } });
-        if (!response.ok) {
-            throw new Error(`${response.status} - ${response.statusText}: /sfx ${value}`);
-        }
-        const con = new AudioContext();
-        const src = con.createBufferSource();
-        src.buffer = await con.decodeAudioData(await response.arrayBuffer());
-        const volume = con.createGain();
-        volume.gain.value = Number(args.volume ?? '1');
-        volume.connect(con.destination);
-        src.connect(volume);
-        src.start();
-        if (isTrueBoolean(args.await)) {
-            await new Promise(resolve=>src.addEventListener('ended', resolve));
-        }
-        return '';
-    },
-    namedArgumentList: [
-        SlashCommandNamedArgument.fromProps({ name: 'volume',
-            description: 'playback volume',
-            typeList: [ARGUMENT_TYPE.NUMBER],
-            defaultValue: '1.0',
-        }),
-        SlashCommandNamedArgument.fromProps({ name: 'await',
-            description: 'whether to wait for the sound to finish playing before continuing',
-            typeList: [ARGUMENT_TYPE.BOOLEAN],
-            defaultValue: 'false',
-        }),
-    ],
-    unnamedArgumentList: [
-        SlashCommandArgument.fromProps({ description: 'url to audio file',
-            typeList: [ARGUMENT_TYPE.STRING],
-            isRequired: true,
-        }),
-    ],
-    helpString: help(
-        `
-            Plays an audio file.
-        `,
-        [
-            [
-                `
-                    /sfx volume=1.5 await=true /user/files/audio/mySound.wav | /echo finished playing sound
-                `,
-                '',
-            ],
-        ],
-    ),
-}));
+intializeAudioCMDs();
 
 
 
@@ -6663,7 +6442,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'fonts',
         return JSON.stringify(
             fonts
                 .map(it=>it.family)
-                .filter((it,idx,list)=>idx == list.indexOf(it))
+                .filter((it,idx,list)=>idx === list.indexOf(it))
             ,
         );
     },
@@ -6692,87 +6471,111 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'fetch',
         try {
             const whitelist = JSON.parse(localStorage.getItem('lalib-fetch') ?? '[]');
             const url = new URL(value.toString(), location.href);
+
             let connect = whitelist.includes(url.hostname) || whitelist.includes(`${url.hostname}${url.pathname}`);
             if (!connect) {
-                const dom = document.createElement('div'); {
-                    const h = document.createElement('h3'); {
-                        h.textContent = '/fetch';
-                        dom.append(h);
-                    }
-                    const q = document.createElement('h4'); {
-                        q.textContent = 'Do you want to connect to the following URL?';
-                        dom.append(q);
-                    }
-                    const v = document.createElement('var'); {
-                        v.textContent = value.toString();
-                        v.style.margin = '2em 0';
-                        v.style.display = 'block';
-                        dom.append(v);
-                    }
-                    const btns = document.createElement('div'); {
-                        btns.style.display = 'flex';
-                        btns.style.flexDirection = 'column';
-                        btns.style.alignItems = 'center';
-                        btns.style.gap = '0.5em';
-                        btns.style.marginTop = '1em';
-                        const list = [
-                            { text: 'Connect once', action:()=>{
-                                connect = true;
-                                dlg.completeAffirmative();
-                            } },
-                            { text: 'Allow connections to', url: `${url.hostname}${url.pathname}`, action:()=>{
-                                whitelist.push(`${url.hostname}${url.pathname}`);
-                                connect = true;
-                                dlg.completeAffirmative();
-                            } },
-                            { text: 'Allow connections to', url: url.hostname, action:()=>{
-                                whitelist.push(url.hostname);
-                                connect = true;
-                                dlg.completeAffirmative();
-                            } },
-                        ];
-                        for (const item of list) {
-                            const btn = document.createElement('div'); {
-                                btn.classList.add('menu_button');
-                                btn.style.width = '90%';
-                                btn.style.display = 'flex';
-                                btn.style.flexDirection = 'column';
-                                btn.style.height = 'auto';
-                                btn.style.padding = '0.75em';
-                                btn.addEventListener('click', ()=>item.action());
-                                const txt = document.createElement('div'); {
-                                    txt.textContent = item.text;
-                                    btn.append(txt);
-                                }
-                                if (item.url) {
-                                    const url = document.createElement('div'); {
-                                        url.style.fontSize = '0.7em';
-                                        url.style.fontFamily = 'var(--monoFontFamily)';
-                                        url.style.opacity = '0.6';
-                                        url.textContent = item.url;
-                                        btn.append(url);
-                                    }
-                                }
-                                btns.append(btn);
-                            }
+                const dom = document.createElement('div');
+                const h = document.createElement('h3');
+
+                h.textContent = '/fetch';
+                dom.append(h);
+
+                const q = document.createElement('h4');
+
+                q.textContent = 'Do you want to connect to the following URL?';
+                dom.append(q);
+
+                const v = document.createElement('var');
+
+                v.textContent = value.toString();
+                v.style.margin = '2em 0';
+                v.style.display = 'block';
+                dom.append(v);
+
+                const btns = document.createElement('div');
+
+                btns.style.display = 'flex';
+                btns.style.flexDirection = 'column';
+                btns.style.alignItems = 'center';
+                btns.style.gap = '0.5em';
+                btns.style.marginTop = '1em';
+
+                const list = [
+                    {
+                        text: 'Connect once', action:()=>{
+                            connect = true;
+                            dlg.completeAffirmative();
                         }
-                        dom.append(btns);
+                    },
+                    {
+                        text: 'Allow connections to',
+                        url: `${url.hostname}${url.pathname}`, action:()=>{
+                            whitelist.push(`${url.hostname}${url.pathname}`);
+
+                            connect = true;
+                            dlg.completeAffirmative();
+                        }
+                    },
+                    {
+                        text: 'Allow connections to',
+                        url: url.hostname, action:()=>{
+                            whitelist.push(url.hostname);
+
+                            connect = true;
+                            dlg.completeAffirmative();
+                        }
+                    },
+                ];
+
+                for (const item of list) {
+                    const btn = document.createElement('div');
+
+                    btn.classList.add('menu_button');
+                    btn.style.width = '90%';
+                    btn.style.display = 'flex';
+                    btn.style.flexDirection = 'column';
+                    btn.style.height = 'auto';
+                    btn.style.padding = '0.75em';
+                    btn.addEventListener('click', ()=>item.action());
+
+                    const txt = document.createElement('div');
+
+                    txt.textContent = item.text;
+                    btn.append(txt);
+
+                    if (item.url) {
+                        const url = document.createElement('div');
+
+                        url.style.fontSize = '0.7em';
+                        url.style.fontFamily = 'var(--monoFontFamily)';
+                        url.style.opacity = '0.6';
+                        url.textContent = item.url;
+                        btn.append(url);
                     }
+
+                    btns.append(btn);
                 }
+                dom.append(btns);
+
+
                 const dlg = new Popup(dom, POPUP_TYPE.TEXT, null, {
                     okButton: 'Block Connection',
                 });
                 await dlg.show();
                 localStorage.setItem('lalib-fetch', JSON.stringify(whitelist));
             }
+
             if (!connect) {
                 toastr.error(value.toString(), '/fetch - Connection blocked');
+
                 return '';
             }
+
             const fn = uuidv4();
             let contentResponse;
-            if (url.origin == location.origin) {
+            if (url.origin === location.origin) {
                 contentResponse = await fetch(url.toString());
+
             } else {
                 const dlResponse = await fetch('/api/assets/download', {
                     method: 'POST',
@@ -6783,12 +6586,16 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'fetch',
                         category: 'ambient',
                     }),
                 });
+
                 if (!dlResponse.ok) throw new Error(`/fetch - failed to fetch URL: ${value}`);
                 contentResponse = await fetch(`/assets/ambient/${fn}`);
             }
+
             if (!contentResponse.ok) throw new Error(`/fetch - failed to fetch URL: ${value}`);
+
             const text = await contentResponse.text();
-            if (url.origin != location.origin) {
+
+            if (url.origin !== location.origin) {
                 fetch('/api/assets/delete', {
                     method: 'POST',
                     headers: getRequestHeaders(),
@@ -6798,20 +6605,24 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: 'fetch',
                     }),
                 });
             }
+
             return text;
-        }
-        catch (ex) {
+
+        } catch (ex) {
             console.error('[LALIB]', '[FETCH]', ex);
-            const dom = document.createElement('div'); {
-                const msg = document.createElement('div'); {
-                    msg.textContent = ex.message;
-                    dom.append(msg);
-                }
-                const url = document.createElement('code'); {
-                    url.textContent = value.toString();
-                    dom.append(url);
-                }
-            }
+
+            const dom = document.createElement('div');
+            const msg = document.createElement('div');
+
+            msg.textContent = ex.message;
+            dom.append(msg);
+
+            const url = document.createElement('code');
+
+            url.textContent = value.toString();
+            dom.append(url);
+
+
             toastr.error(dom.outerHTML, '/fetch', { escapeHtml:false });
             throw ex;
         }
@@ -6845,7 +6656,7 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({ name: '$',
         let el;
         if (args.query) {
             el = dom.querySelector(args.query);
-        } else if (dom.children.length == 1) {
+        } else if (dom.children.length === 1) {
             el = dom.children[0];
         } else {
             el = document.createElement('div');

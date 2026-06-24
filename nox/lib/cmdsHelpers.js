@@ -1,43 +1,44 @@
+/* eslint-disable no-undef */
 // @ts-nocheck
 export function trim(txt){
     if (txt.split('\n').length < 2) return txt;
+
     const indent = /^([     ]*)\S/m.exec(txt)?.[1] ?? '';
     const re = new RegExp(`^${indent}`, 'mg');
+
     return txt.replace(re, '').replace(/\s*$/s, '');
 }
 
 function examples(list){
-    const dom = document.createElement('div'); {
-        const title = document.createElement('strong'); {
-            title.textContent = 'Examples:';
-            dom.append(title);
-        }
+    const
+        dom = document.createElement('div'),
+        title = document.createElement('strong');
 
-        const ul = document.createElement('ul'); {
-            for (const [code, comment] of list) {
-                const li = document.createElement('li'); {
-                    const pre = document.createElement('pre'); {
-                        const c = document.createElement('code'); {
-                            c.classList.add('language-stscript');
-                            c.textContent = trim(code).trim();
-                            pre.append(c);
-                        }
+    title.textContent = 'Examples:';
+    dom.append(title);
 
-                        li.append(pre);
-                    }
+    const ul = document.createElement('ul');
+    for (const [code, comment] of list) {
+        const
+            li = document.createElement('li'),
+            pre = document.createElement('pre'),
+            c = document.createElement('code');
 
-                    const comm = document.createElement('span'); {
-                        comm.innerHTML = comment;
-                        li.append(comm);
-                    }
+        c.classList.add('language-stscript');
+        c.textContent = trim(code).trim();
 
-                    ul.append(li);
-                }
-            }
+        pre.append(c);
+        li.append(pre);
 
-            dom.append(ul);
-        }
+        const comm = document.createElement('span');
+
+        comm.innerHTML = comment;
+
+        li.append(comm);
+        ul.append(li);
     }
+
+    dom.append(ul);
 
     return dom.outerHTML;
 }

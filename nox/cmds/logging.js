@@ -1,5 +1,7 @@
+/* eslint-disable no-undef */
 // @ts-nocheck
 import { help } from '../lib/cmdsHelpers.js';
+import { toConsole } from '../lib/logging.js';
 
 const { SlashCommandParser, SlashCommand, SlashCommandArgument } = SillyTavern.getContext();
 
